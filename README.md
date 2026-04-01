@@ -1,28 +1,28 @@
 # HorarioUCJC
 Repositorio para el trabajo Horario UCJC por parte de Rodrigo Moreno Menéndez en la asignatura Desarrollo de Software y Sistemas.
 
-# 📚 Esquema de Base de Datos Tipado (PostgreSQL)
+# Esquema de Base de Datos Tipado (PostgreSQL)
 
 ## 1. Núcleo Académico
 
 ### Titulacion
-- id: SERIAL (PK)
+- id: UUID (PK)
 - nombre: VARCHAR(150) NOT NULL
 - descripcion: TEXT
 
 ### CursoAcademico
-- id: SERIAL (PK)
+- id: UUID (PK)
 - anio_inicio: INT NOT NULL
 - anio_fin: INT NOT NULL
 - estado: VARCHAR(20) CHECK (estado IN ('activo', 'cerrado'))
 
 ### Curso
-- id: SERIAL (PK)
+- id: UUID (PK)
 - numero: INT NOT NULL
 - titulacion_id: INT (FK)
 
 ### Asignatura
-- id: SERIAL (PK)
+- id: UUID (PK)
 - codigo: VARCHAR(20) UNIQUE NOT NULL
 - nombre: VARCHAR(150) NOT NULL
 - horas_totales: INT NOT NULL
@@ -30,7 +30,7 @@ Repositorio para el trabajo Horario UCJC por parte de Rodrigo Moreno Menéndez e
 - es_transversal: BOOLEAN DEFAULT FALSE
 
 ### Grupo
-- id: SERIAL (PK)
+- id: UUID (PK)
 - nombre: VARCHAR(20)
 - tipo: VARCHAR(20) CHECK (tipo IN ('teoria', 'practica', 'laboratorio'))
 - curso_id: INT (FK)
