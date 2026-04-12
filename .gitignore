@@ -1,0 +1,8 @@
+# Entornos a ignorar a la hora de hacer commit
+.venv
+.env
+
+# Cache
+__pycache__
+node_modules
+package-lock.json

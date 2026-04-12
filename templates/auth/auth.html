@@ -1,0 +1,147 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title> {{ Title }} | Horario UCJC</title>
+    <link rel="stylesheet" href="{% static 'dist/output.css' %}">
+</head>
+<body>
+    <main class="flex flex-row h-screen">
+        <!-- Primera mitad: Foto + Mensaje de bienvenida-->
+        <div class="relative flex flex-col basis-3/4 ps-12 pt-12 pb-12 overflow-hidden bg-secondary">
+            
+            <div class="absolute inset-0 bg-cover bg-center grayscale brightness-[0.4] scale-105"
+                style="background-image: url('{% static 'img/ucjc.jpg' %}');">
+            </div>
+
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+
+            <div class="relative z-10 flex flex-col h-full">
+                
+                <h1 class="text-neutral font-headline text-4xl tracking-tight">
+                    Horario <strong class="text-primary font-extrabold">UCJC</strong>
+                </h1>
+
+                <div class="mt-auto mb-10 flex flex-col gap-6 max-w-xl">
+                    <h2 class="text-neutral font-headline text-5xl font-bold leading-tight">
+                        Tu tiempo académico, <br>
+                        en perfecta armonía.
+                    </h2>
+                    
+                    <div class="h-1 w-20 bg-primary"></div> <p class="text-neutral/90 font-body text-lg leading-relaxed"> 
+                        Bienvenido al portal unificado de gestión. <br>
+                        Inicia sesión para acceder a tu calendario personalizado.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- Segunda mitad: Formulario para el login -->
+        <div class="basis-2/4 flex flex-col items-center justify-center py-40">
+            <div class="w-full max-w-md">   
+                
+                <div class="flex flex-col gap-2 text-left mb-10">
+                    <h1 class="text-black text-4xl font-headline font-bold">Bienvenido de vuelta</h1>
+                    <p class="text-gray-500 font-body">Por favor, ingrese sus credenciales</p>
+                </div>
+
+                <form class="flex flex-col gap-6" method="POST">
+                    {% csrf_token %}
+                    
+                    {% if form.errors or error %}
+                    <div id="auth-alert" role="alert" class="absolute bottom-6 right-6 z-50 flex min-w-[320px] items-center gap-3 p-4 shadow-2xl alert alert-error sm:rounded-xl border-none animate-in slide-in-from-right-full duration-300 ease-out">
+                        
+                        <div class="bg-red-500 p-2 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-white" fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+
+                        <div class="flex flex-col">
+                            <span class="font-bold text-black text-sm">¡Ups! Algo salió mal</span>
+                            <span class="text-xs text-black/80 font-medium">
+                                {% if form.non_field_errors %}
+                                    {{ form.non_field_errors.0 }}
+                                {% elif error %}
+                                    {{ error }}
+                                {% else %}
+                                    Revisa tus credenciales e intenta de nuevo.
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <button onclick="document.getElementById('auth-alert').remove()" 
+                                class="btn btn-ghost btn-xs btn-circle text-black ml-auto">
+                            ✕
+                        </button>
+                    </div>
+
+                    <script>
+                        setTimeout(function() {
+                            const alertElement = document.getElementById('auth-alert');
+                            if (alertElement) {
+                                alertElement.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+                                alertElement.style.opacity = "0";
+                                alertElement.style.transform = "translateX(20px)"; 
+                                
+                                setTimeout(() => alertElement.remove(), 600);
+                            }
+                        }, 5000);
+                    </script>
+                    {% endif %}
+
+
+                    <fieldset class="fieldset p-0"> 
+                        <legend class="fieldset-legend text-gray-500 font-label font-semibold">CORREO INSTITUCIONAL</legend>
+                        <input
+                            name="username"  
+                            type="email"
+                            class="w-full h-12 border-none bg-neutral p-5 input input-primary font-label rounded-sm"
+                            placeholder="Correo Institucional"
+                            required
+                        />
+                    </fieldset>
+
+                    <fieldset class="fieldset p-0">
+                        <legend class="fieldset-legend text-gray-500 font-label font-semibold">CONTRASEÑA</legend>
+                        <input
+                            name="password"  
+                            type="password"
+                            class="w-full h-12 border-none bg-neutral p-5 input input-primary font-label rounded-sm"
+                            placeholder="Ingrese su contraseña"
+                            required
+                        />
+                    </fieldset> 
+
+                    <button type="submit" class="w-full rounded-sm bg-primary h-12 mt-4 btn border-none hover:brightness-110 transition-all shadow-md">
+                        <span class="font-body font-semibold text-neutral text-lg">Iniciar Sesión</span>
+                    </button>
+                </form>
+
+                <div class="relative flex items-center py-12">
+                    <div class="flex-grow border-t border-gray-300"></div>
+                        <span class="flex-shrink mx-4 text-gray-400 text-[10px] uppercase font-bold tracking-widest">
+                            INICIAR SESIÓN CON TERCEROS
+                        </span>
+                        <div class="flex-grow border-t border-gray-300">
+                    </div>
+                </div>
+                
+                <button class="flex items-center justify-center gap-3 w-full rounded-sm bg-gray-100 h-12 mt-4 btn border-none hover:bg-gray-200 transition-all shadow-sm cursor-pointer group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 21 21" class="group-hover:scale-110 transition-transform">
+                        <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                        <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                        <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                        <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+                    </svg>
+                    
+                    <span class="font-body font-semibold text-tertiary text-base">
+                        Microsoft Office365
+                    </span>
+                </button>
+                
+            </div>
+        </div>
+        
+    </main>
+</body>
+</html>

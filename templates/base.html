@@ -1,0 +1,109 @@
+{% load static %}
+{% load tailwind_tags %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ Title }} | Horario UCJC</title>
+    <link rel="stylesheet" href="{% static 'dist/output.css' %}">
+    {% tailwind_css %}
+</head>
+
+<body class="flex flex-row min-h-screen w-full">
+    <aside class="basis-1/4 w-1/3 h-screen p-6 bg-neutral">
+        {#<!-- Introducción a la aplicación -->#}
+        <div class="flex flex-row items-center gap-4 mb-4">
+            <img 
+                class="w-12 h-12 rounded-lg object-contain" 
+                src="{% static 'dist/img/logo.png' %}" 
+                alt="Logo"
+            >
+            
+            <div class="flex flex-col justify-center">
+                <h1 class="font-headline font-bold text-2xl leading-none tracking-tight text-black">
+                    UCJC
+                </h1>
+                {% if Rol == "Estudiante" %}
+                <p class="font-body font-bold text-sm leading-tight text-gray-500 uppercase">
+                    VISUALIZACIÓN DE<br>HORARIOS
+                </p>
+                {% elif Rol == "Profesor" %}
+                <p class="font-body font-bold text-sm leading-tight text-gray-500 uppercase">
+                    GESTOR DE HORARIOS<br>
+                    ACADÉMICOS
+                </p>
+                {% else %}
+                <p class="font-body font-bold text-sm leading-tight text-gray-500 uppercase">
+                    GESTOR DE HORARIOS<br>
+                    ACADÉMICOS
+                </p>
+                {% endif%}
+            </div>
+        </div>
+
+        <div class="border-t border-gray-200 my-6"></div>
+        {#<!-- Menu de botones -->#}
+        <div class="flex flex-col gap-2.5">
+            <a 
+                href="{% url 'dashboard-inicio'%}" 
+                class="
+                border-none rounded-sm w-4/5 flex flex-row p-2.5 gap-2.5 transition-all duration-100 ease-in
+                {% if request.resolver_match.url_name == 'dashboard-inicio' %}
+                        bg-white text-primary font-semibold
+                {% else %} 
+                        bg-transparent text-tertiary font-light hover:bg-white hover:text-primary focus:text-primary
+                {% endif %}"
+                >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+                </svg>
+
+                <p class="font-label text-md">Panel de Inicio</p> 
+            </a>
+            <a href="{% url 'dashboard-horario' %}" 
+            class="border-none rounded-sm w-4/5 flex flex-row p-2.5 gap-2.5 transition-all duration-100 ease-in
+            {% if request.resolver_match.url_name == 'dashboard-horario' %}
+                    bg-white text-primary font-semibold
+            {% else %} 
+                    bg-transparent text-tertiary font-light hover:bg-white hover:text-primary focus:text-primary
+            {% endif %}">
+                
+                <svg xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke-width="1.5" 
+                    stroke="currentColor" 
+                    class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                </svg>
+
+                <p class="font-label text-md">Mi Horario</p> 
+            </a>
+        </div>
+
+        <form method="post" action="{% url 'logout' %}" class="mt-4">
+            {% csrf_token %}
+            <button type="submit" 
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                </svg>
+                Cerrar Sesión
+            </button>
+        </form>
+    </aside>
+    <main class="basis-3/4 p-6 h-screen bg-gray-50"> 
+        <p class="font-headline text-l text-primary font-bold tracking-widest">
+            {{ Date.upper }}
+        </p>
+        <div class="pt-4">
+        {% block content %}
+        {% endblock %}
+        </div>
+    </main>     
+    {% block js %}{% endblock %}
+</body>
+</html>

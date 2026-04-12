@@ -1,0 +1,7 @@
+# Framework
+Django
+django-environ
+django-tailwind
+django-browser-reload
+# Requerimientos para la base de datos 
+psycopg[binary] 
