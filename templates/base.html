@@ -7,103 +7,135 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ Title }} | Horario UCJC</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="{% static 'dist/output.css' %}">
     {% tailwind_css %}
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
 
-<body class="flex flex-row min-h-screen w-full">
-    <aside class="basis-1/4 w-1/3 h-screen p-6 bg-neutral">
-        {#<!-- Introducción a la aplicación -->#}
-        <div class="flex flex-row items-center gap-4 mb-4">
-            <img 
-                class="w-12 h-12 rounded-lg object-contain" 
-                src="{% static 'dist/img/logo.png' %}" 
-                alt="Logo"
-            >
+<body class="flex min-h-screen w-full bg-gray-50 overflow-x-hidden" x-data="{ sidebarOpen: false }">
+    
+    <aside 
+        class="fixed inset-y-0 left-0 z-50 basis-1/4 w-64 md:w-1/3 lg:basis-1/4 h-screen p-6 bg-white border-r border-gray-100 transition-transform duration-300 transform md:relative md:translate-x-0"
+        :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+        x-cloak>
+        
+        {##}
+        <div class="flex items-center gap-4 mb-8">
+            <div class="p-2 bg-primary/5 rounded-xl">
+                <img 
+                    class="w-10 h-10 rounded-lg object-contain" 
+                    src="{% static 'dist/img/logo.png' %}" 
+                    alt="Logo UCJC"
+                >
+            </div>
             
-            <div class="flex flex-col justify-center">
-                <h1 class="font-headline font-bold text-2xl leading-none tracking-tight text-black">
+            <div class="flex flex-col">
+                <h1 class="font-headline font-black text-2xl leading-none tracking-tight text-gray-900">
                     UCJC
                 </h1>
-                {% if Rol == "Estudiante" %}
-                <p class="font-body font-bold text-sm leading-tight text-gray-500 uppercase">
-                    VISUALIZACIÓN DE<br>HORARIOS
+                <p class="font-body font-bold text-[10px] leading-tight text-gray-400 uppercase tracking-tighter mt-1">
+                    {% if Rol == "Estudiante" %}
+                        Visualización de<br>Horarios
+                    {% else %}
+                        Gestor de Horarios<br>Académicos
+                    {% endif %}
                 </p>
-                {% elif Rol == "Profesor" %}
-                <p class="font-body font-bold text-sm leading-tight text-gray-500 uppercase">
-                    GESTOR DE HORARIOS<br>
-                    ACADÉMICOS
-                </p>
-                {% else %}
-                <p class="font-body font-bold text-sm leading-tight text-gray-500 uppercase">
-                    GESTOR DE HORARIOS<br>
-                    ACADÉMICOS
-                </p>
-                {% endif%}
             </div>
         </div>
 
-        <div class="border-t border-gray-200 my-6"></div>
-        {#<!-- Menu de botones -->#}
-        <div class="flex flex-col gap-2.5">
-            <a 
-                href="{% url 'dashboard-inicio'%}" 
-                class="
-                border-none rounded-sm w-4/5 flex flex-row p-2.5 gap-2.5 transition-all duration-100 ease-in
-                {% if request.resolver_match.url_name == 'dashboard-inicio' %}
-                        bg-white text-primary font-semibold
-                {% else %} 
-                        bg-transparent text-tertiary font-light hover:bg-white hover:text-primary focus:text-primary
-                {% endif %}"
-                >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+        <div class="border-t border-gray-100 my-6"></div>
+
+        {##}
+        <nav class="flex flex-col gap-2">
+            <a href="{% url 'dashboard-inicio' %}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+               {% if request.resolver_match.url_name == 'dashboard-inicio' %}
+                    bg-primary text-white shadow-lg shadow-primary/20
+               {% else %}
+                    text-gray-500 hover:bg-gray-50 hover:text-primary
+               {% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
                 </svg>
-
-                <p class="font-label text-md">Panel de Inicio</p> 
+                <span class="font-semibold text-sm">Panel de Inicio</span>
             </a>
+
             <a href="{% url 'dashboard-horario' %}" 
-            class="border-none rounded-sm w-4/5 flex flex-row p-2.5 gap-2.5 transition-all duration-100 ease-in
-            {% if request.resolver_match.url_name == 'dashboard-horario' %}
-                    bg-white text-primary font-semibold
-            {% else %} 
-                    bg-transparent text-tertiary font-light hover:bg-white hover:text-primary focus:text-primary
-            {% endif %}">
-                
-                <svg xmlns="http://www.w3.org/2000/svg" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke-width="1.5" 
-                    stroke="currentColor" 
-                    class="size-6">
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+               {% if request.resolver_match.url_name == 'dashboard-horario' %}
+                    bg-primary text-white shadow-lg shadow-primary/20
+               {% else %}
+                    text-gray-500 hover:bg-gray-50 hover:text-primary
+               {% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
                 </svg>
-
-                <p class="font-label text-md">Mi Horario</p> 
+                <span class="font-semibold text-sm">Mi Horario</span>
             </a>
-        </div>
+        </nav>
 
-        <form method="post" action="{% url 'logout' %}" class="mt-4">
-            {% csrf_token %}
-            <button type="submit" 
-                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                </svg>
-                Cerrar Sesión
-            </button>
-        </form>
-    </aside>
-    <main class="basis-3/4 p-6 h-screen bg-gray-50"> 
-        <p class="font-headline text-l text-primary font-bold tracking-widest">
-            {{ Date.upper }}
-        </p>
-        <div class="pt-4">
-        {% block content %}
-        {% endblock %}
+        {##}
+        <div class="absolute bottom-8 left-6 right-6">
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="flex items-center justify-center w-full gap-2 px-4 py-3 text-sm font-bold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors border border-red-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                    </svg>
+                    Cerrar Sesión
+                </button>
+            </form>
         </div>
-    </main>     
+    </aside>
+
+    <main class="flex-1 flex flex-col min-h-screen overflow-y-auto">
+        
+        <header class="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-100">
+            <h1 class="font-black text-primary text-xl tracking-tight">UCJC</h1>
+            <button @click="sidebarOpen = !sidebarOpen" class="p-2 text-gray-500 bg-gray-50 rounded-lg">
+                <svg x-show="!sidebarOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                <svg x-show="sidebarOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </header>
+
+        <div class="p-6 lg:p-10">
+            <div class="mb-8" x-data="{ greeting: '' }" x-init="
+                const hour = new Date().getHours();
+                if (hour < 12) greeting = 'Buenos días';
+                else if (hour < 20) greeting = 'Buenas tardes';
+                else greeting = 'Buenas noches';
+            ">
+                <p class="font-headline text-xs lg:text-sm text-primary font-black tracking-[0.2em] uppercase mb-2 opacity-50">
+                    {{ Date }}
+                </p>
+                <h2 class="text-3xl lg:text-4xl font-bold text-gray-900" x-text="greeting + ' {{user.first_name}}'"></h2>
+                <p class="font-normal text-lg md:text-xl text-gray-500">Aquí tienes el resumen académico para el día de hoy.</p>
+            </div>
+
+            <div class="transition-all duration-500 ease-in-out">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
+    </main>
+
+    <div 
+        x-show="sidebarOpen" 
+        @click="sidebarOpen = false" 
+        class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0">
+    </div>
+
     {% block js %}{% endblock %}
 </body>
 </html>

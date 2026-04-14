@@ -1,23 +1,31 @@
-// Archivo JS para profesor
+const dayBtn = document.getElementById("day");
+const weekBtn = document.getElementById("week");
+const dayList = document.getElementById("day-info");
+const weekList = document.getElementById("week-info");
 
-// Instancias de dia y semana
-const day = document.getElementById("day");
-const week = document.getElementById("week");
-const dayList = document.getElementById("day-info")
-const weekList = document.getElementById("week-info")
+// Grupos de clases definidos en un array
+const activeClasses = ["bg-white", "text-rose-700", "shadow-sm"];
+const inactiveClasses = ["bg-transparent", "text-gray-500"];
 
-// Evento tras pulsar el boton "Dia"
-day.addEventListener("click", () => {
-    if (dayList.classList.contains("hidden")) {
-        dayList.classList.remove("hidden");
-    }
-    weekList.classList.add("hidden")
-})
+// Funcion auxiliar para actualizar estilos
+function updateStyles(active, inactive) {
+    active.classList.remove(...inactiveClasses);
+    active.classList.add(...activeClasses);
 
-// Evento tras pulsar el boton "Semana"
-week.addEventListener("click", () => {
-    if (weekList.classList.contains("hidden")) {
-        weekList.classList.remove("hidden");
-    }
-    dayList.classList.add("hidden")
-})
+    inactive.classList.remove(...activeClasses);
+    inactive.classList.add(...inactiveClasses);
+}
+
+dayBtn.addEventListener("click", () => {
+    updateStyles(dayBtn, weekBtn);
+    
+    dayList.classList.remove("hidden");
+    weekList.classList.add("hidden");
+});
+
+weekBtn.addEventListener("click", () => {
+    updateStyles(weekBtn, dayBtn);
+    
+    weekList.classList.remove("hidden");
+    dayList.classList.add("hidden");
+});

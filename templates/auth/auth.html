@@ -1,147 +1,96 @@
 {% load static %}
+{% load tailwind_tags %}
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
 <head>
     <title> {{ Title }} | Horario UCJC</title>
     <link rel="stylesheet" href="{% static 'dist/output.css' %}">
+    {% tailwind_css %}
 </head>
-<body>
-    <main class="flex flex-row h-screen">
-        <!-- Primera mitad: Foto + Mensaje de bienvenida-->
-        <div class="relative flex flex-col basis-3/4 ps-12 pt-12 pb-12 overflow-hidden bg-secondary">
-            
+<body class="antialiased bg-white h-full">
+    <main class="flex flex-col lg:flex-row min-h-screen h-screen w-full bg-white">
+
+        <div class="relative flex flex-col w-full lg:w-3/5 shrink-0
+                    px-6 lg:ps-12 pt-6 lg:pt-12 pb-6 lg:pb-12
+                    overflow-hidden bg-secondary
+                    h-[30vh] sm:h-[34vh] lg:h-screen">
             <div class="absolute inset-0 bg-cover bg-center grayscale brightness-[0.4] scale-105"
-                style="background-image: url('{% static 'img/ucjc.jpg' %}');">
+                style="background-image: url('{% static 'dist/img/ucjc.png' %}');">
             </div>
-
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
             <div class="relative z-10 flex flex-col h-full">
-                
-                <h1 class="text-neutral font-headline text-4xl tracking-tight">
+                <h1 class="text-neutral font-headline text-2xl lg:text-4xl tracking-tight uppercase">
                     Horario <strong class="text-primary font-extrabold">UCJC</strong>
                 </h1>
-
-                <div class="mt-auto mb-10 flex flex-col gap-6 max-w-xl">
-                    <h2 class="text-neutral font-headline text-5xl font-bold leading-tight">
-                        Tu tiempo académico, <br>
-                        en perfecta armonía.
+                <div class="mt-auto mb-4 flex flex-col gap-2 lg:hidden">
+                    <h2 class="text-neutral font-headline text-2xl font-bold leading-tight drop-shadow-md">
+                        Tu tiempo académico, en perfecta armonía.
                     </h2>
-                    
-                    <div class="h-1 w-20 bg-primary"></div> <p class="text-neutral/90 font-body text-lg leading-relaxed"> 
-                        Bienvenido al portal unificado de gestión. <br>
-                        Inicia sesión para acceder a tu calendario personalizado.
-                    </p>
+                    <div class="h-1 w-12 bg-primary"></div>
+                </div>
+                <div class="mt-auto mb-10 hidden lg:flex flex-col gap-6 max-w-xl">
+                    <h2 class="text-neutral font-headline text-5xl font-bold leading-tight">Tu tiempo académico, <br> en perfecta armonía.</h2>
+                    <div class="h-1 w-20 bg-primary"></div>
                 </div>
             </div>
         </div>
-        <!-- Segunda mitad: Formulario para el login -->
-        <div class="basis-2/4 flex flex-col items-center justify-center py-40">
-            <div class="w-full max-w-md">   
-                
-                <div class="flex flex-col gap-2 text-left mb-10">
-                    <h1 class="text-black text-4xl font-headline font-bold">Bienvenido de vuelta</h1>
-                    <p class="text-gray-500 font-body">Por favor, ingrese sus credenciales</p>
+
+        <div class="flex-1 w-full flex flex-col min-h-0 items-center justify-center lg:justify-center
+                    px-3 sm:px-4 py-3 sm:py-6 lg:py-12 bg-white">
+            <div class="w-full max-w-full sm:max-w-md">
+
+                <div class="flex flex-col gap-1 text-left mb-5 sm:mb-8 lg:mb-8">
+                    <h1 class="text-black text-4xl sm:text-5xl lg:text-4xl font-headline font-bold tracking-tight">Bienvenido de vuelta</h1>
+                    <p class="text-gray-500 font-body text-base sm:text-lg">Por favor, ingrese sus credenciales</p>
                 </div>
 
-                <form class="flex flex-col gap-6" method="POST">
+                <form class="flex flex-col gap-4 sm:gap-6" method="POST">
                     {% csrf_token %}
-                    
-                    {% if form.errors or error %}
-                    <div id="auth-alert" role="alert" class="absolute bottom-6 right-6 z-50 flex min-w-[320px] items-center gap-3 p-4 shadow-2xl alert alert-error sm:rounded-xl border-none animate-in slide-in-from-right-full duration-300 ease-out">
-                        
-                        <div class="bg-red-500 p-2 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-white" fill="none" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                        </div>
 
-                        <div class="flex flex-col">
-                            <span class="font-bold text-black text-sm">¡Ups! Algo salió mal</span>
-                            <span class="text-xs text-black/80 font-medium">
-                                {% if form.non_field_errors %}
-                                    {{ form.non_field_errors.0 }}
-                                {% elif error %}
-                                    {{ error }}
-                                {% else %}
-                                    Revisa tus credenciales e intenta de nuevo.
-                                {% endif %}
-                            </span>
-                        </div>
-
-                        <button onclick="document.getElementById('auth-alert').remove()" 
-                                class="btn btn-ghost btn-xs btn-circle text-black ml-auto">
-                            ✕
-                        </button>
-                    </div>
-
-                    <script>
-                        setTimeout(function() {
-                            const alertElement = document.getElementById('auth-alert');
-                            if (alertElement) {
-                                alertElement.style.transition = "opacity 0.6s ease, transform 0.6s ease";
-                                alertElement.style.opacity = "0";
-                                alertElement.style.transform = "translateX(20px)"; 
-                                
-                                setTimeout(() => alertElement.remove(), 600);
-                            }
-                        }, 5000);
-                    </script>
-                    {% endif %}
-
-
-                    <fieldset class="fieldset p-0"> 
-                        <legend class="fieldset-legend text-gray-500 font-label font-semibold">CORREO INSTITUCIONAL</legend>
+                    <fieldset class="fieldset p-0">
+                        <legend class="fieldset-legend text-gray-400 font-label font-bold text-[10px] sm:text-[11px] tracking-widest uppercase mb-1.5">CORREO INSTITUCIONAL</legend>
                         <input
-                            name="username"  
+                            name="username"
                             type="email"
-                            class="w-full h-12 border-none bg-neutral p-5 input input-primary font-label rounded-sm"
-                            placeholder="Correo Institucional"
+                            class="w-full h-14 sm:h-14 lg:h-12 border border-gray-200 bg-gray-50 focus:bg-white px-4 sm:px-4 input input-primary font-label rounded-md transition-all outline-none text-lg sm:text-lg lg:text-base"
+                            placeholder="ejemplo@ucjc.edu"
                             required
                         />
                     </fieldset>
 
                     <fieldset class="fieldset p-0">
-                        <legend class="fieldset-legend text-gray-500 font-label font-semibold">CONTRASEÑA</legend>
+                        <legend class="fieldset-legend text-gray-400 font-label font-bold text-[10px] sm:text-[11px] tracking-widest uppercase mb-1.5">CONTRASEÑA</legend>
                         <input
-                            name="password"  
+                            name="password"
                             type="password"
-                            class="w-full h-12 border-none bg-neutral p-5 input input-primary font-label rounded-sm"
-                            placeholder="Ingrese su contraseña"
+                            class="w-full h-14 sm:h-14 lg:h-12 border border-gray-200 bg-gray-50 focus:bg-white px-4 sm:px-4 input input-primary font-label rounded-md transition-all outline-none text-lg sm:text-lg lg:text-base"
+                            placeholder="••••••••"
                             required
                         />
-                    </fieldset> 
+                    </fieldset>
 
-                    <button type="submit" class="w-full rounded-sm bg-primary h-12 mt-4 btn border-none hover:brightness-110 transition-all shadow-md">
-                        <span class="font-body font-semibold text-neutral text-lg">Iniciar Sesión</span>
+                    <button type="submit" class="w-full rounded-md bg-primary h-14 sm:h-14 lg:h-12 mt-2 btn border-none hover:bg-primary/90 active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
+                        <span class="font-body font-bold text-neutral text-base sm:text-base lg:text-base">Iniciar Sesión</span>
                     </button>
                 </form>
 
-                <div class="relative flex items-center py-12">
-                    <div class="flex-grow border-t border-gray-300"></div>
-                        <span class="flex-shrink mx-4 text-gray-400 text-[10px] uppercase font-bold tracking-widest">
-                            INICIAR SESIÓN CON TERCEROS
-                        </span>
-                        <div class="flex-grow border-t border-gray-300">
-                    </div>
+                <div class="relative flex items-center py-5 sm:py-8 lg:py-10">
+                    <div class="flex-grow border-t border-gray-200"></div>
+                    <span class="flex-shrink mx-3 sm:mx-4 text-gray-400 text-[9px] sm:text-[10px] uppercase font-black tracking-[0.2em]">O continuar con</span>
+                    <div class="flex-grow border-t border-gray-200"></div>
                 </div>
-                
-                <button class="flex items-center justify-center gap-3 w-full rounded-sm bg-gray-100 h-12 mt-4 btn border-none hover:bg-gray-200 transition-all shadow-sm cursor-pointer group">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 21 21" class="group-hover:scale-110 transition-transform">
-                        <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
-                        <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
-                        <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
-                        <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+
+                <button class="flex items-center justify-center gap-2 sm:gap-3 w-full rounded-md bg-white h-11 sm:h-12 lg:h-12 border border-gray-200 hover:bg-gray-50 active:scale-[0.98] transition-all shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 21 21" class="sm:w-5 sm:h-5">
+                        <rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
                     </svg>
-                    
-                    <span class="font-body font-semibold text-tertiary text-base">
+                    <span class="font-body font-semibold text-gray-700 text-sm sm:text-base lg:text-sm">
                         Microsoft Office365
                     </span>
                 </button>
-                
+
             </div>
         </div>
-        
     </main>
 </body>
 </html>

@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from datetime import datetime, timedelta
+import locale
 
 # Funcion auxiliar para obtener el rol del usuario segun su perfil
 def obtain_rol(user):
@@ -14,32 +16,35 @@ def obtain_rol(user):
 # Redireccionamiento al Dashboard
 @login_required
 def home_redirect(request):
-    # Obtener el rol del usuario
     rol, profile = obtain_rol(request.user)
 
-    # Obtener la fecha mediante datetime y la traducimos al español
-    from datetime import datetime
-    import locale
-    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    try:
+        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    except:
+        locale.setlocale(locale.LC_TIME, 'es-ES')
 
     now = datetime.now()
-    day_name = now.strftime('%A').capitalize()
-    day = now.day
-    month = now.strftime("%B")
-    year = now.year
-
-    date = f"{day_name}, {day} {month} {year}"
-
-    # Configuramos el contexto segun el rol del usuario
-    if not rol:
-        return render(request, 'auth/no_perfil.html', {'user': request.user})
     
-    # Actualizamos el contexto
+    # Encontramos el lunes de la semana actual
+    actual_monday = now - timedelta(days=now.weekday())
+
+    # Creamos una lista con los números de los 7 días (Lunes a Domingo)
+    week_days = [(actual_monday + timedelta(days=i)).day for i in range(7)]
+
+    day = now.day
+    month_name = now.strftime("%B")
+    year = now.year
+    date_str = f"{now.strftime('%A').capitalize()}, {day} {month_name} {year}"
+
     context = {
         'Rol': rol,
         'Perfil': profile,
         'Title': f'Dashboard - {rol}',
-        'Date': date
+        'Date': date_str,
+        'day': day,
+        'month_name': month_name,
+        'year': year,
+        'semana_dias': week_days, 
     }
     
     return render(request, 'dashboard/home.html', context)
