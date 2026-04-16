@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block header %}
+<div class="mb-8">
+    <p class="font-headline text-xs lg:text-sm text-primary font-black tracking-[0.2em] uppercase mb-2 opacity-50">
+        Vista Semanal
+    <p>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
+        <div class="flex flex-col gap-2">
+            <p class="font-headline text-4xl lg_text-xl text-black font-black font-bolder medium">Calendario para {{Rol }}</p>
+            <p class="font-headline text-xs lg_text-sm text-gray-300 font-black uppercase font-neutral medium">Semana del {{Date}}</p>
+        </div>
+        <div class="flex flex-col gap-2">
+            <div class="flex bg-gray-100 p-1 rounded-xl w-full sm:w-fit">
+                <button id="week" class="flex-1 sm:flex-none rounded-lg px-6 py-2 text-sm font-bold transition-all bg-white text-rose-700 shadow-sm">Semanal</button>
+                <button id="month" class="flex-1 sm:flex-none rounded-lg px-6 py-2 text-sm font-bold transition-all bg-transparent text-gray-500 hover:text-gray-700">Mensual</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock%}
+{% block content %}
+<div class="border radius-sm h-1vh">
+
+</div>
+{% endblock %}
+
+{% block js %}
+{% endblock %}
