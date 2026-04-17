@@ -22,12 +22,10 @@ Sistema web de generación de horarios académicos para la Universidad Camilo Jo
 
 ## 🛠️ Tecnologías utilizadas
 
-> *(Actualiza esta sección con el stack real del proyecto)*
-
-- **Frontend:** HTML, CSS, JavaScript *(o el framework utilizado)*
-- **Backend:** *(framework/lenguaje utilizado)*
-- **Base de datos:** *(base de datos utilizada)*
-- **Autenticación:** *(sistema de autenticación utilizado)*
+- **Frontend:** HTML, CSS, JavaScript, TailwindCSS
+- **Backend:** Django
+- **Base de datos:** PostgreSQL
+- **Autenticación:** django.contrib.auth
 
 ---
 
@@ -35,8 +33,8 @@ Sistema web de generación de horarios académicos para la Universidad Camilo Jo
 
 ### Requisitos previos
 
-- *(Ej: Node.js v18+, Python 3.10+, PHP 8+, etc.)*
-- *(Ej: MySQL / PostgreSQL / SQLite)*
+- *Gestor de Node (npm, pnpm...), Gestor de Python (p.ej: uv, pip, pipx...)*
+- *PostgreSQL)*
 
 ### Pasos
 
@@ -46,29 +44,21 @@ git clone https://github.com/Romendesu/HorarioUCJC.git
 cd HorarioUCJC
 
 # 2. Instalar dependencias
-# (ajusta según el gestor de paquetes de tu proyecto)
-npm install
-# o
+
 pip install -r requirements.txt
 # o
 composer install
 
 # 3. Configurar variables de entorno
 cp .env.example .env
-# Edita el archivo .env con tus credenciales de base de datos
+# Edita el archivo .env con tus credenciales de base de datos + secret key de Django
 
 # 4. Ejecutar migraciones
-# (ajusta según tu stack)
-php artisan migrate
-# o
 python manage.py migrate
 
 # 5. Iniciar el servidor de desarrollo
-npm run dev
-# o
-php artisan serve
-# o
 python manage.py runserver
+
 ```
 
 ---
@@ -77,17 +67,19 @@ python manage.py runserver
 
 ```
 HorarioUCJC/
-├── src/                  # Código fuente principal
-├── public/               # Archivos públicos / assets
-├── views/                # Vistas y plantillas
-├── routes/               # Definición de rutas
-├── controllers/          # Lógica de controladores
-├── models/               # Modelos de datos
-├── .env.example          # Ejemplo de configuración
+├── apps/                  # Aplicaciones del proyectp
+├── horario/               # Configuración + enrutado
+├── static/                # Archivos estáticos
+├── templates/             # Templates del proyecto
+├── theme/                 # TailwindCSS
+├── .env.example           # Ejemplo de configuración
+├── .gitignore             # Ignorar cache + archivos secretos
+├── manage.py              # Ejecucción del proyecto
+├── requirements.txt       # Dependencias de Python
+├── package.json           # Dependencias de Node
 └── README.md
 ```
 
-> *(Ajusta la estructura según la organización real del proyecto)*
 
 ---
 
