@@ -54,16 +54,13 @@ def home_redirect(request):
 def schedule_redirect(request):
     rol, profile = obtain_rol(request.user)
     try:
-        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+        locale.setlocale(locale.LC_TIME, 'es_es.UTF-8')
     except:
-        locale.setlocale(locale.LC_TIME, 'es-ES')
+        locale.setlocale(locale.LC_TIME, 'es-es')
     
     now = datetime.now()
-    # Encontramos el lunes de la semana actual
     actual_monday = now - timedelta(days=now.weekday())
-
-    # Creamos una lista con los números de los 7 días (Lunes a Domingo)
-    week_days = [(actual_monday + timedelta(days=i)).day for i in range(7)]
+    week_days = [actual_monday + timedelta(days=i) for i in range(5)]
 
     day = now.day
     month_name = now.strftime("%B")
@@ -78,7 +75,7 @@ def schedule_redirect(request):
         'day': day,
         'month_name': month_name,
         'year': year,
-        'semana_dias': week_days, 
+        'semana_dias': week_days, # Ahora contiene objetos datetime
     }
    
     return render(request, 'dashboard/schedule.html', context)

@@ -5,8 +5,6 @@ from django import forms
 
 # 1. Definición del Formulario Personalizado
 class EmailAuthenticationForm(AuthenticationForm):
-    # CAMBIO AQUÍ: Usamos CharField en lugar de EmailField
-    # para que acepte tanto el correo como el username interno
     username = forms.CharField(widget=forms.EmailInput(attrs={
         'class': 'w-full h-12 border-none bg-neutral p-5 input input-primary font-label rounded-sm',
         'placeholder': 'Correo Institucional',

@@ -19,8 +19,151 @@
 </div>
 {% endblock%}
 {% block content %}
-<div class="border radius-sm h-1vh">
+<div class="w-full mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+        <div class="p-3 bg-red-100 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+        </div>
+        <div>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Siguiente Clase</p>
+            <p class="text-sm font-bold text-slate-800">Advanced Algorithms - 11:00</p>
+        </div>
+    </div>
 
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+        <div class="p-3 bg-indigo-100 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0 1 18 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3 1.5 1.5 3-3.75" />
+            </svg>
+        </div>
+        <div>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Horas Lectivas Hoy</p>
+            <p class="text-sm font-bold text-slate-800">4 Horas (2 sesiones)</p>
+        </div>
+    </div>
+
+</div>
+
+<div class="w-full px-2 sm:px-0">
+
+    <div class="md:hidden space-y-4">
+        <div class="flex items-center justify-between px-2 mb-2">
+            <h3 class="font-bold text-[#8a1538] uppercase text-xs tracking-widest">Horario de Hoy</h3>
+            <span class="text-[10px] text-slate-400 font-bold uppercase">{{ Date }}</span>
+        </div>
+        
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-indigo-900 flex justify-between items-center">
+            <div class="space-y-1">
+                <p class="text-[10px] font-bold text-indigo-700 uppercase">09:00 - 11:00 | Tutoring</p>
+                <h2 class="text-base font-bold text-slate-900 leading-tight">Student Office Hours</h2>
+                <p class="text-xs text-slate-500">📍 Office 12B</p>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-lg text-center min-w-[50px]">
+                <p class="text-[9px] font-bold text-slate-400 uppercase">LUN</p>
+                <p class="text-lg font-black text-slate-700">13</p>
+            </div>
+        </div>
+
+        <div class="bg-red-50 p-4 rounded-xl shadow-sm border-l-4 border-[#8a1538] flex justify-between items-center">
+            <div class="space-y-1">
+                <p class="text-[10px] font-bold text-[#8a1538] uppercase">09:00 - 11:00 | Master Pro</p>
+                <h2 class="text-base font-bold text-[#5c0e25] leading-tight">Advanced Algorithms</h2>
+                <p class="text-xs text-[#8a1538]">📍 Auditorium B</p>
+            </div>
+            <div class="bg-white p-2 rounded-lg text-center min-w-[50px] shadow-sm">
+                <p class="text-[9px] font-bold text-[#8a1538] uppercase">MIÉ</p>
+                <p class="text-lg font-black text-[#8a1538]">15</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="hidden md:grid grid-cols-6 gap-0 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+        
+        <div class="flex justify-center items-center h-28 bg-slate-50 border-b border-r border-slate-100">
+            <div class="p-3 bg-indigo-50 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="size-8 fill-[#8a1538]">
+                    <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z" clip-rule="evenodd" />
+                </svg>
+            </div>
+        </div>
+
+        {% for fecha in semana_dias %}
+        <div class="flex flex-col justify-center items-center h-28 bg-slate-50 border-b border-r border-slate-100 relative
+                    {% if fecha.day == day %} border-t-4 border-t-[#8a1538] bg-red-50/30 {% endif %}">
+            <p class="text-xs font-bold {% if fecha.day == day %} text-[#8a1538] {% else %} text-slate-400 {% endif %} uppercase tracking-widest">{{ fecha|date:"D" }}</p>
+            <h1 class="text-4xl font-black {% if fecha.day == day %} text-[#8a1538] {% else %} text-slate-800 {% endif %}">{{ fecha|date:"j" }}</h1>
+            {% if fecha.day == day %}
+                <span class="absolute bottom-2 text-[10px] font-bold text-[#8a1538] uppercase tracking-tighter">HOY</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <div class="flex flex-col items-center justify-center h-44 bg-slate-50 border-b border-r border-slate-100 font-bold text-slate-400 text-center">
+            <span class="text-xs">09:00</span>
+            <div class="w-4 border-t border-slate-300 my-1"></div>
+            <span class="text-xs">11:00</span>
+        </div>
+        
+        <div class="h-44 border-b border-r border-slate-100 p-2 bg-white">
+            <div class="h-full w-full bg-slate-50 rounded-lg border-l-4 border-indigo-900 p-3 shadow-sm hover:shadow-md transition-all cursor-pointer group">
+                <p class="text-[9px] font-bold text-indigo-700 uppercase">Tutoring</p>
+                <h2 class="text-[13px] font-bold text-slate-900 leading-tight group-hover:text-indigo-900">Student Office Hours</h2>
+                <p class="text-[10px] text-slate-500 mt-2">📍 Office 12B</p>
+            </div>
+        </div>
+        
+        <div class="h-44 border-b border-r border-slate-100 bg-white"></div>
+        
+        <div class="h-44 border-b border-r border-slate-100 p-2 bg-white">
+            <div class="h-full w-full bg-[#fdf2f4] rounded-lg border-l-4 border-[#8a1538] p-3 shadow-sm hover:shadow-md transition-all cursor-pointer group">
+                <p class="text-[9px] font-bold text-[#8a1538] uppercase">Master Pro</p>
+                <h2 class="text-[13px] font-bold text-[#5c0e25] leading-tight group-hover:text-red-700">Advanced Algorithms</h2>
+                <p class="text-[10px] text-[#8a1538] opacity-80 mt-2">📍 Auditorium B</p>
+            </div>
+        </div>
+        
+        <div class="h-44 border-b border-r border-slate-100 bg-white"></div>
+        <div class="h-44 border-b border-r border-slate-100 bg-white"></div>
+
+        <div class="flex flex-col items-center justify-center h-44 bg-slate-50 border-b border-r border-slate-100 font-bold text-slate-400 text-center">
+            <span class="text-xs">11:00</span>
+            <div class="w-4 border-t border-slate-300 my-1"></div>
+            <span class="text-xs">13:00</span>
+        </div>
+        
+        <div class="h-44 border-b border-r border-slate-100 bg-white"></div>
+        
+        <div class="h-44 border-b border-r border-slate-100 p-2 bg-white">
+            <div class="h-full w-full bg-slate-50 rounded-lg border-l-4 border-indigo-900 p-3 shadow-sm group transition-all">
+                <p class="text-[9px] font-bold text-indigo-700 uppercase">Group A1</p>
+                <h2 class="text-[13px] font-bold text-slate-900 leading-tight group-hover:text-indigo-900">HCI Practical</h2>
+                <p class="text-[10px] text-slate-500 mt-2">📍 Lab 201</p>
+            </div>
+        </div>
+        
+        {% for i in "123" %}<div class="h-44 border-b border-r border-slate-100 bg-white"></div>{% endfor %}
+
+        <div class="flex flex-col items-center justify-center h-44 bg-slate-50 border-b border-r border-slate-100 font-bold text-slate-400 text-center">
+            <span class="text-xs">13:00</span>
+            <div class="w-4 border-t border-slate-300 my-1"></div>
+            <span class="text-xs">15:00</span>
+        </div>
+
+        <div class="h-44 border-b border-r border-slate-100 bg-white"></div>
+        
+        <div class="h-44 border-b border-r border-slate-100 p-2 bg-white">
+            <div class="h-full w-full bg-slate-50 rounded-lg border-l-4 border-indigo-900 p-3 shadow-sm group">
+                <p class="text-[9px] font-bold text-indigo-700 uppercase">Group A1</p>
+                <h2 class="text-[13px] font-bold text-slate-900 leading-tight group-hover:text-indigo-900">HCI Practical</h2>
+                <p class="text-[10px] text-slate-500 mt-2">📍 Lab 201</p>
+            </div>
+        </div>
+        
+        {% for i in "123" %}<div class="h-44 border-b border-r border-slate-100 bg-white"></div>{% endfor %}
+
+    </div>
 </div>
 {% endblock %}
 
