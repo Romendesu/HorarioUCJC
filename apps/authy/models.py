@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 
 # Modelo de Estudiante
 class Estudiante(models.Model):
@@ -9,8 +10,29 @@ class Estudiante(models.Model):
 
 # Modelo del Profesor
 class Profesor(models.Model):
+    '''
+    Modelo que representa al rol de profesor.
+    Atributos:
+    - Disponibilidad (RF - 08.1 / De lunes a viernes ): El profesor puede marcar su disponibilidad horaria. 
+      Por defecto, la disponibilidad del profesor será todos los días
+    - 
+    '''
+    AVAIABLE_DAYS = [
+        ('l', 'Lunes'),
+        ('m', 'Martes'),
+        ('x', 'Miercoles'),
+        ('j', 'Jueves'),
+        ('v', 'Viernes'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil_profesor')
-    disponibilidad = models.CharField(max_length=100)
+    disponibilidad = ArrayField(
+        models.CharField(max_length=1, choices=AVAIABLE_DAYS),
+        blank=True,
+        default=list,
+        help_text="Seleccione los dias de disponibilidad del profesor"
+    )
+
     asignaturas = models.CharField(max_length=100)
 
 # Modelo del decano

@@ -1,10 +1,39 @@
+from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from .models import Estudiante, Profesor, Decano
 
+# --- FORMULARIO PERSONALIZADO PARA PROFESOR ---
+
+class ProfesorForm(forms.ModelForm):
+    # Definimos el campo disponibilidad con un widget de Checkboxes
+    disponibilidad = forms.MultipleChoiceField(
+        choices=Profesor.AVAIABLE_DAYS, # Asegúrate de que se llame AVAILABLE_DAYS en tu modelo
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        help_text="Seleccione los días de disponibilidad"
+    )
+
+    class Meta:
+        model = Profesor
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Esto asegura que si ya hay datos, se marquen los checkboxes correctamente
+        if self.instance and self.instance.disponibilidad:
+            self.initial['disponibilidad'] = self.instance.disponibilidad
+
+    def save(self, commit=True):
+        # Guardamos la lista de Python directamente en el ArrayField
+        instance = super().save(commit=False)
+        instance.disponibilidad = self.cleaned_data['disponibilidad']
+        if commit:
+            instance.save()
+        return instance
+
 # --- CONFIGURACIÓN DE INLINES ---
-# Esto permite que los campos extra aparezcan dentro de la edición del Usuario
 
 class EstudianteInline(admin.StackedInline):
     model = Estudiante
@@ -14,9 +43,11 @@ class EstudianteInline(admin.StackedInline):
 
 class ProfesorInline(admin.StackedInline):
     model = Profesor
+    form = ProfesorForm  # <--- APLICAMOS EL FORMULARIO AQUÍ
     can_delete = False
     verbose_name_plural = 'Información de Profesor'
     fk_name = 'user'
+    extra = 1
 
 class DecanoInline(admin.StackedInline):
     model = Decano
@@ -27,40 +58,31 @@ class DecanoInline(admin.StackedInline):
 # --- PERSONALIZACIÓN DEL USER ADMIN ---
 
 class UserAdmin(BaseUserAdmin):
-    # Añadimos los tres perfiles al formulario de usuario
     inlines = [EstudianteInline, ProfesorInline, DecanoInline]
-    
-    # Columnas que verás en la lista de usuarios
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'get_rol')
 
     def get_rol(self, obj):
-        # Función auxiliar para ver el rol rápidamente en la lista
-        if hasattr(obj, 'perfil_estudiante'): return "Estudiante"
-        if hasattr(obj, 'perfil_profesor'): return "Profesor"
-        if hasattr(obj, 'perfil_decano'): return "Decano"
+        if hasattr(obj, 'estudiante'): return "Estudiante" # Verifica los related_name de tus OneToOneField
+        if hasattr(obj, 'profesor'): return "Profesor"
+        if hasattr(obj, 'decano'): return "Decano"
         return "Sin Perfil"
     
     get_rol.short_description = 'Rol Asignado'
 
 # --- REGISTRO FINAL ---
 
-# Primero quitamos el registro por defecto del modelo User
 admin.site.unregister(User)
-# Lo registramos de nuevo con nuestra configuración personalizada
 admin.site.register(User, UserAdmin)
 
-# También los registramos por separado por si quieres editarlos individualmente
 @admin.register(Estudiante)
 class EstudianteAdmin(admin.ModelAdmin):
     list_display = ('user', 'carrera', 'anio')
-    search_fields = ('user__username', 'carrera')
 
 @admin.register(Profesor)
 class ProfesorAdmin(admin.ModelAdmin):
+    form = ProfesorForm # <--- Y TAMBIÉN AQUÍ para la edición individual
     list_display = ('user', 'asignaturas', 'disponibilidad')
-    search_fields = ('user__username', 'asignaturas')
 
 @admin.register(Decano)
 class DecanoAdmin(admin.ModelAdmin):
     list_display = ('user', 'facultad')
-    search_fields = ('user__username', 'facultad')

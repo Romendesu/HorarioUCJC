@@ -45,11 +45,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'tailwind',
     'theme',
     'django_browser_reload',
     'apps.authy',
-    #'apps.core',
+    'apps.core',
     'apps.dashboard',
     
 ]
