@@ -9,11 +9,11 @@
                 <p class="font-headline text-xs lg:text-sm text-primary font-black tracking-[0.2em] uppercase mb-2 opacity-50">
                     {{ Date }}
                 </p>
-                <h2 class="font-headline text-4xl lg_text-xl text-black font-black font-bolder medium" x-text="greeting + ' {{user.username}}'"></h2>
+                <h2 class="font-headline text-4xl lg:text-3xl text-black font-black" x-text="greeting + ' {{user.username}}'"></h2>
                 {% if request.resolver_match.url_name == "dashboard-inicio" %}
-                <p class="font-headline text-xs lg_text-sm text-gray-300 font-black uppercase font-neutral medium">Aquí tienes el resumen académico para el día de hoy.</p>
+                <p class="font-headline text-xs lg:text-sm text-gray-400 font-black uppercase">Aquí tienes el resumen académico para el día de hoy.</p>
                 {% elif request.resolver_match.url_name == "dashboard-horario"%}
-                <p class="font-headline text-xs lg_text-sm text-gray-300 font-black uppercase font-neutral medium">Aquí tienes el horario para el {{ Date }}</p>
+                <p class="font-headline text-xs lg:text-sm text-gray-400 font-black uppercase">Aquí tienes el horario para el {{ Date }}</p>
                 {% endif %}
             </div>
 {% endblock%}
@@ -21,29 +21,32 @@
 {% block content %}
     {% if Rol == "Profesor" or Rol == "Estudiante" %}
     <div class="flex flex-col lg:flex-row gap-8 items-start">
-        
+
         {# SECCIÓN IZQUIERDA: Métricas y Horarios #}
         <div class="w-full lg:basis-2/3 order-2 lg:order-1">
-            
+
+            {# ── Tarjetas de métricas ─────────────────────────────────────── #}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
                     <div class="relative z-10 flex flex-col gap-y-3">
                         <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Horas Lectivas</p>
                         <div class="flex items-baseline gap-x-1">
-                            <h1 class="text-4xl font-extrabold text-gray-950">18h</h1>
+                            <h1 class="text-4xl font-extrabold text-gray-950">{{ horas_semana }}h</h1>
                             <p class="text-xs font-medium text-gray-400">/semana</p>
                         </div>
                         <div class="mt-2 h-2 w-full rounded-full bg-gray-100">
-                            <div class="h-2 w-[75%] rounded-full bg-rose-700"></div>
+                            <div class="h-2 rounded-full bg-primary transition-all" style="width: {{ horas_semana_pct }}%"></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
-                    <div class="relative z-10 flex flex-col gap-y-3">      
+                    <div class="relative z-10 flex flex-col gap-y-3">
                         <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Asignaturas</p>
-                        <h1 class="text-4xl font-extrabold text-gray-950">4</h1>
-                        <p class="text-xs text-gray-400 font-medium tracking-tight">Activas este semestre</p>
+                        <h1 class="text-4xl font-extrabold text-gray-950">{{ total_asignaturas }}</h1>
+                        <p class="text-xs text-gray-400 font-medium tracking-tight">
+                            {% if total_asignaturas == 1 %}Activa{% else %}Activas{% endif %} este semestre
+                        </p>
                     </div>
                 </div>
 
@@ -51,180 +54,227 @@
                     <div class="relative z-10 flex flex-col gap-y-3">
                         <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Clases Hoy</p>
                         <div class="flex items-baseline gap-x-1">
-                            <h1 class="text-4xl font-extrabold text-gray-950">5</h1>
-                            <p class="text-xs font-medium text-gray-400">/10</p>
+                            <h1 class="text-4xl font-extrabold text-gray-950">{{ clases_hoy_count }}</h1>
+                            <p class="text-xs font-medium text-gray-400">
+                                {% if clases_hoy_count == 1 %}sesión{% else %}sesiones{% endif %}
+                            </p>
                         </div>
                         <div class="mt-2 h-2 w-full rounded-full bg-gray-100">
-                            <div class="h-2 w-[50%] rounded-full bg-rose-700"></div>
+                            <div class="h-2 rounded-full bg-primary transition-all" style="width: {{ clases_hoy_pct }}%"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {# ── Resumen del programa ─────────────────────────────────────── #}
             <div class="mt-12">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                     <h1 class="font-bold text-gray-400 uppercase tracking-widest text-sm">Resumen del programa</h1>
+                    {% if tiene_horario %}
                     <div class="flex bg-gray-100 p-1 rounded-xl w-full sm:w-fit">
-                        <button id="week" class="flex-1 sm:flex-none rounded-lg px-6 py-2 text-sm font-bold transition-all bg-white text-rose-700 shadow-sm">Semanal</button>
-                        <button id="day" class="flex-1 sm:flex-none rounded-lg px-6 py-2 text-sm font-bold transition-all bg-transparent text-gray-500 hover:text-gray-700">Diario</button>
+                        <button id="week" class="flex-1 sm:flex-none rounded-lg px-6 py-2 text-sm font-bold transition-all bg-white text-primary shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset">Semanal</button>
+                        <button id="day" class="flex-1 sm:flex-none rounded-lg px-6 py-2 text-sm font-bold transition-all bg-transparent text-gray-500 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset">Diario</button>
                     </div>
+                    {% endif %}
                 </div>
 
+                {% if tiene_horario %}
+                {# Vista semanal #}
                 <div id="week-info" class="flex flex-col gap-4">
-                    <div class="flex flex-col md:flex-row md:items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100 gap-6">
-                        <div class="flex flex-col min-w-[120px] md:border-r md:border-gray-100">
-                            <span class="text-rose-800 font-bold text-xs uppercase">Lunes 14 Oct.</span>
-                            <span class="text-gray-900 text-2xl font-bold">Hoy</span>
+                    {% for sesion in sesiones_semana %}
+                    <div class="flex flex-col md:flex-row md:items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100 gap-6 hover:border-primary/30 transition-colors">
+                        <div class="flex flex-col min-w-[120px] md:border-r md:border-gray-100 pr-4">
+                            <span class="text-primary font-bold text-xs uppercase">{{ sesion.get_dia_display }}</span>
+                            <span class="text-gray-900 text-xl font-bold">{{ sesion.hora_inicio|time:"H:i" }}</span>
                         </div>
                         <div class="flex-1">
-                            <h3 class="text-gray-900 font-bold text-lg">Arquitectura de Computadores</h3>
-                            <p class="text-gray-500 text-sm font-medium">09:00 - 11:00 • Aula 2L-15</p>
+                            <h3 class="text-gray-900 font-bold text-base leading-tight">{{ sesion.asignatura.nombre }}</h3>
+                            <p class="text-gray-500 text-sm font-medium mt-1">
+                                {{ sesion.hora_inicio|time:"H:i" }} – {{ sesion.hora_fin|time:"H:i" }} &middot; {{ sesion.aula }}
+                                {% if Rol == "Estudiante" and sesion.profesor %}
+                                &middot; {{ sesion.profesor.user.get_full_name|default:sesion.profesor.user.username }}
+                                {% elif Rol == "Profesor" %}
+                                &middot; {{ sesion.horario.grado.nombre }}
+                                {% endif %}
+                            </p>
                         </div>
-                        <div class="hidden md:block">
-                            <div class="p-2 bg-gray-50 rounded-full text-gray-300">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" /></svg>
-                            </div>
+                        <div class="hidden md:block shrink-0">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase
+                                {% if sesion.asignatura.tipo == 's' %}bg-blue-100 text-blue-700{% else %}bg-purple-100 text-purple-700{% endif %}">
+                                {{ sesion.asignatura.get_tipo_display }}
+                            </span>
                         </div>
                     </div>
+                    {% empty %}
+                    <div class="bg-gray-50 rounded-2xl p-8 text-center">
+                        <p class="text-gray-500">No hay sesiones programadas esta semana</p>
+                    </div>
+                    {% endfor %}
                 </div>
 
+                {# Vista diaria (timeline) #}
                 <div id="day-info" class="hidden relative space-y-4 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
-                    
+                    {% for sesion in sesiones_hoy %}
+                    {% with hora_inicio=sesion.hora_inicio hora_fin=sesion.hora_fin %}
                     <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group py-4">
-                        <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-gray-200 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                            <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-primary shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                            <div class="w-2 h-2 bg-white rounded-full"></div>
                         </div>
-                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-6 rounded-2xl border border-gray-100 opacity-60">
-                            <div class="flex justify-between mb-1">
-                                <span class="font-bold text-gray-500 text-sm">08:30 — 10:00</span>
-                                <span class="bg-gray-100 text-gray-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Aula A</span>
-                            </div>
-                            <h3 class="text-lg font-bold text-gray-700 leading-tight">Historia de la Arquitectura</h3>
-                        </div>
-                    </div>
-
-                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group py-4">
-                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-rose-700 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                            <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                        </div>
-                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-6 rounded-2xl shadow-xl border-l-4 border-rose-700 relative">
+                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:border-primary/30 transition-colors">
                             <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <span class="text-rose-700 font-black text-xl">10:30 — 12:30</span>
-                                    <span class="block text-[10px] font-bold text-rose-500 uppercase tracking-widest">En Curso</span>
-                                </div>
-                                <span class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Aula 2L-15</span>
+                                <span class="text-primary font-black text-base">{{ hora_inicio|time:"H:i" }} – {{ hora_fin|time:"H:i" }}</span>
+                                <span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase">{{ sesion.aula }}</span>
                             </div>
-                            <h3 class="text-xl font-extrabold text-gray-900 mb-4">Diseño Arquitectónico III</h3>
-                            <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
-                                <div class="h-full bg-rose-700" style="width: 65%;"></div>
-                            </div>
-                            <div class="flex justify-between text-[10px] font-bold text-gray-400 uppercase">
-                                <span>Inicio 10:30</span>
-                                <span>Fin 12:30</span>
-                            </div>
+                            <h3 class="text-base font-extrabold text-gray-900">{{ sesion.asignatura.nombre }}</h3>
+                            {% if Rol == "Estudiante" and sesion.profesor %}
+                            <p class="text-xs text-gray-400 mt-1">{{ sesion.profesor.user.get_full_name|default:sesion.profesor.user.username }}</p>
+                            {% elif Rol == "Profesor" %}
+                            <p class="text-xs text-gray-400 mt-1">{{ sesion.horario.grado.nombre }}</p>
+                            {% endif %}
                         </div>
                     </div>
-
+                    {% endwith %}
+                    {% empty %}
+                    <div class="bg-gray-50 rounded-2xl p-8 text-center">
+                        <p class="text-gray-500">No hay clases programadas para hoy</p>
+                    </div>
+                    {% endfor %}
                 </div>
+
+                {% else %}
+                {# Sin horario aprobado #}
+                <div class="bg-gray-50 rounded-2xl p-10 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <p class="text-gray-500 font-medium">No hay horario aprobado para el curso activo</p>
+                    <p class="text-gray-400 text-sm mt-1">El decano aún no ha generado y aprobado el horario</p>
+                </div>
+                {% endif %}
             </div>
         </div>
 
-        {# SECCIÓN DERECHA: Widget Próxima Clase #}
+        {# SECCIÓN DERECHA: Widget Próxima Clase + Mini-calendario #}
         <div class="w-full lg:basis-1/3 lg:sticky lg:top-8 order-1 lg:order-2">
-            <div class="relative overflow-hidden rounded-3xl bg-rose-900 p-8 shadow-2xl text-white">
+
+            {# Widget próxima clase #}
+            <div class="relative overflow-hidden rounded-3xl bg-primary p-8 shadow-2xl text-white">
                 <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white opacity-5"></div>
-                
+
+                {% if proxima_sesion %}
                 <div class="flex justify-between items-start mb-10">
-                    <span class="inline-flex items-center gap-x-2 rounded-full bg-red-500/20 px-4 py-1.5 text-xs font-bold text-red-100 ring-1 ring-inset ring-red-400/30">
+                    <span class="inline-flex items-center gap-x-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-bold text-white ring-1 ring-inset ring-white/20">
                         <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/70 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                         </span>
-                        Siguiente sesión en 45 min
+                        Próxima sesión
                     </span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-white/70">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
                 </div>
 
                 <div class="mb-8">
-                    <p class="text-red-300 text-xs font-bold uppercase tracking-widest mb-2">Próxima clase</p>
-                    <h1 class="text-3xl font-black leading-tight tracking-tight">Arquitectura de computadores</h1>
+                    <p class="text-white/70 text-xs font-bold uppercase tracking-widest mb-2">
+                        {{ proxima_sesion.get_dia_display }}
+                    </p>
+                    <h1 class="text-2xl font-black leading-tight tracking-tight">{{ proxima_sesion.asignatura.nombre }}</h1>
                 </div>
 
                 <div class="space-y-4 mb-10">
-                    <div class="flex items-center gap-4 group">
-                        <div class="p-2.5 bg-white/10 rounded-xl transition-colors group-hover:bg-white/20">
+                    <div class="flex items-center gap-4">
+                        <div class="p-2.5 bg-white/10 rounded-xl">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
                             </svg>
                         </div>
-                        <p class="font-bold text-sm">Aula 2L-15 - Pabellón 2R</p>
+                        <p class="font-bold text-sm">{{ proxima_sesion.aula }}</p>
                     </div>
-                    <div class="flex items-center gap-4 group">
-                        <div class="p-2.5 bg-white/10 rounded-xl transition-colors group-hover:bg-white/20">
+                    <div class="flex items-center gap-4">
+                        <div class="p-2.5 bg-white/10 rounded-xl">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                             </svg>
                         </div>
-                        <p class="font-bold text-sm">09:00 — 11:00 AM</p>
+                        <p class="font-bold text-sm">{{ proxima_sesion.hora_inicio|time:"H:i" }} – {{ proxima_sesion.hora_fin|time:"H:i" }}</p>
                     </div>
+                    {% if Rol == "Estudiante" and proxima_sesion.profesor %}
+                    <div class="flex items-center gap-4">
+                        <div class="p-2.5 bg-white/10 rounded-xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                            </svg>
+                        </div>
+                        <p class="font-bold text-sm">{{ proxima_sesion.profesor.user.get_full_name|default:proxima_sesion.profesor.user.username }}</p>
+                    </div>
+                    {% elif Rol == "Profesor" %}
+                    <div class="flex items-center gap-4">
+                        <div class="p-2.5 bg-white/10 rounded-xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-1.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+                            </svg>
+                        </div>
+                        <p class="font-bold text-sm">{{ proxima_sesion.horario.grado.nombre }}</p>
+                    </div>
+                    {% endif %}
                 </div>
 
-                <a href="#" class="flex items-center justify-center w-full py-4 bg-white text-rose-950 font-black rounded-2xl shadow-lg hover:bg-gray-100 hover:scale-[1.02] transition-all duration-300">
-                    Ver más información
+                <a href="{% url 'dashboard-horario' %}" class="flex items-center justify-center w-full py-4 bg-white text-primary font-black rounded-2xl shadow-lg hover:bg-gray-100 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary">
+                    Ver horario completo
                 </a>
+
+                {% else %}
+                {# Sin próxima sesión #}
+                <div class="flex justify-between items-start mb-10">
+                    <span class="inline-flex items-center rounded-full bg-white/15 px-4 py-1.5 text-xs font-bold text-white ring-1 ring-inset ring-white/20">
+                        Sin clases pendientes
+                    </span>
+                </div>
+                <div class="mb-8">
+                    <p class="text-white/70 text-xs font-bold uppercase tracking-widest mb-2">Próxima clase</p>
+                    <h1 class="text-2xl font-black leading-tight tracking-tight text-white/60">Sin sesiones programadas</h1>
+                </div>
+                <a href="{% url 'dashboard-horario' %}" class="flex items-center justify-center w-full py-4 bg-white text-primary font-black rounded-2xl shadow-lg hover:bg-gray-100 active:scale-[0.98] transition-all duration-300">
+                    Ver horario
+                </a>
+                {% endif %}
             </div>
-            
+
+            {# Mini-calendario #}
             <div class="max-w-md bg-white p-6 mt-6 rounded-3xl shadow-sm border border-gray-100">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-gray-800 capitalize">
-                        {{ month_name }} {{ year }}
-                    </h2>
-                    
+                    <h2 class="text-xl font-bold text-gray-800 capitalize">{{ month_name }} {{ year }}</h2>
                     <div class="flex gap-2">
-                        <button class="text-gray-400 p-1.5 hover:bg-gray-50 rounded-lg transition-colors">
+                        <button class="text-gray-400 p-1.5 hover:bg-gray-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
-                        <button class="text-gray-400 p-1.5 hover:bg-gray-50 rounded-lg transition-colors">
+                        <button class="text-gray-400 p-1.5 hover:bg-gray-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
                         </button>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-7 gap-y-4 text-center items-center justify-items-center">
-                    
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center w-10">L</div>
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center w-10">M</div>
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center w-10">X</div>
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center w-10">J</div>
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center w-10">V</div>
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center w-10">S</div>
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center w-10">D</div>
-
+                    {% for label in "LMXJVSD" %}
+                    <div class="text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center w-10">{{ label }}</div>
+                    {% endfor %}
                     {% for d in semana_dias %}
-                        <div class="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-xl transition-all
-                            {% if d == day %} 
-                                {# Estilo para el día actual (Rojo bloqueado) #}
-                                bg-rose-700 text-white shadow-lg shadow-rose-200 
-                            {% else %} 
-                                {# Estilo para los demás días de la semana #}
-                                text-slate-600 
-                            {% endif %}">
-                            {{ d }}
-                        </div>
+                    <div class="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-xl transition-all
+                        {% if d == day %}bg-primary text-white shadow-lg shadow-primary/20{% else %}text-gray-600{% endif %}">
+                        {{ d }}
+                    </div>
                     {% endfor %}
                 </div>
-            </div> 
+            </div>
         </div>
     </div>
 
-    {% elif Rol == "Decano"%}
+    {% elif Rol == "Decano" %}
     {% else %}
     {% endif %}
 

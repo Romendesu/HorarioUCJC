@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block header %}
+<div x-data class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div class="flex flex-col gap-2">
+        <p class="font-headline text-xs lg:text-sm text-primary font-black tracking-[0.2em] uppercase mb-1 opacity-50">
+            Gestión Académica
+        </p>
+        <h2 class="font-headline text-3xl lg:text-4xl text-black font-black">Gestionar Cursos</h2>
+        <p class="font-headline text-xs lg:text-sm text-gray-400 font-black uppercase">Administra los años académicos del sistema</p>
+    </div>
+    <button @click="$dispatch('abrir-crear-curso')" class="btn-primary shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+        </svg>
+        Nuevo Curso
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div x-data="{
+    showModalCrear: false,
+    showModalEditar: false,
+    editando: { id: '', año: '', es_activo: false },
+    abrirEditar(btn) {
+        this.editando = {
+            id: btn.dataset.id,
+            año: btn.dataset.año,
+            es_activo: btn.dataset.esActivo === 'true'
+        };
+        this.showModalEditar = true;
+    }
+}"
+@abrir-crear-curso.window="showModalCrear = true"
+class="flex flex-col gap-6">
+
+    {# ── Barra de estado ──────────────────────────────────────────────── #}
+    <div class="flex items-center gap-3 text-sm text-gray-500">
+        <span class="font-bold text-gray-900 text-base">{{ cursos|length }}</span>
+        curso{{ cursos|length|pluralize:"s" }} académico{{ cursos|length|pluralize:"s" }}
+    </div>
+
+    {# ── Tabla de cursos ──────────────────────────────────────────────── #}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Año Académico</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Horarios</th>
+                        <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for curso in cursos %}
+                    <tr class="group hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-primary/8 rounded-lg shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <span class="font-semibold text-gray-900">{{ curso.año }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if curso.estado == 'activo' %}
+                            <span class="badge-green">
+                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                Activo
+                            </span>
+                            {% else %}
+                            <span class="badge-gray">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                                Inactivo
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm text-gray-600">{{ curso.horarios.count }} horario{{ curso.horarios.count|pluralize:"s" }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center justify-end gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    data-id="{{ curso.id }}"
+                                    data-año="{{ curso.año }}"
+                                    data-es-activo="{% if curso.estado == 'activo' %}true{% else %}false{% endif %}"
+                                    @click="abrirEditar($el)"
+                                    class="p-2 text-gray-500 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                                    title="Editar">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+                                <form method="post" action="{% url 'decano-cursos' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="eliminar">
+                                    <input type="hidden" name="curso_id" value="{{ curso.id }}">
+                                    <button type="submit"
+                                            class="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Eliminar"
+                                            onclick="return confirm('¿Eliminar el curso «{{ curso.año }}»?')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-16 text-center">
+                            <div class="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-3">No hay cursos académicos registrados.</p>
+                            <button @click="showModalCrear = true" class="text-sm text-primary font-semibold hover:underline">
+                                Crear el primer curso
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# ── Modal Crear ──────────────────────────────────────────────────── #}
+    <div x-show="showModalCrear"
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center"
+         style="display: none;"
+         @keydown.escape.window="showModalCrear = false">
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="showModalCrear = false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10" @click.stop>
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-bold text-xl text-gray-900">Nuevo Curso Académico</h3>
+                <button @click="showModalCrear = false" class="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form method="post" action="{% url 'decano-cursos' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="crear">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Año Académico</label>
+                        <input type="text" name="año" required placeholder="Ej: 2024-2025" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                    </div>
+                    <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+                        <input type="checkbox" name="es_activo" id="es_activo_crear" class="w-4 h-4 accent-primary rounded">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700">Marcar como activo</p>
+                            <p class="text-xs text-gray-400">Solo puede haber un curso activo a la vez</p>
+                        </div>
+                    </label>
+                </div>
+                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+                    <button type="button" @click="showModalCrear = false" class="btn-ghost">Cancelar</button>
+                    <button type="submit" class="btn-primary">Crear curso</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# ── Modal Editar ─────────────────────────────────────────────────── #}
+    <div x-show="showModalEditar"
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center"
+         style="display: none;"
+         @keydown.escape.window="showModalEditar = false">
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="showModalEditar = false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10" @click.stop>
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-bold text-xl text-gray-900">Editar Curso Académico</h3>
+                <button @click="showModalEditar = false" class="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form method="post" action="{% url 'decano-cursos' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="editar">
+                <input type="hidden" name="curso_id" :value="editando.id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Año Académico</label>
+                        <input type="text" name="año" x-model="editando.año" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                    </div>
+                    <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+                        <input type="checkbox" name="es_activo" x-model="editando.es_activo" id="es_activo_editar" class="w-4 h-4 accent-primary rounded">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700">Marcar como activo</p>
+                            <p class="text-xs text-gray-400">Solo puede haber un curso activo a la vez</p>
+                        </div>
+                    </label>
+                </div>
+                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+                    <button type="button" @click="showModalEditar = false" class="btn-ghost">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

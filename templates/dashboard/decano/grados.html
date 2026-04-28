@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block header %}
+<div x-data class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div class="flex flex-col gap-2">
+        <p class="font-headline text-xs lg:text-sm text-primary font-black tracking-[0.2em] uppercase mb-1 opacity-50">
+            Gestión Académica
+        </p>
+        <h2 class="font-headline text-3xl lg:text-4xl text-black font-black">Gestionar Grados</h2>
+        <p class="font-headline text-xs lg:text-sm text-gray-400 font-black uppercase">Administra las titulaciones del sistema</p>
+    </div>
+    <button @click="$dispatch('abrir-crear-grado')" class="btn-primary shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+        </svg>
+        Nuevo Grado
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div x-data="{
+    showModalCrear: false,
+    showModalEditar: false,
+    editando: { id: '', nombre: '', duracion: 4 },
+    abrirEditar(btn) {
+        this.editando = {
+            id: btn.dataset.id,
+            nombre: btn.dataset.nombre,
+            duracion: btn.dataset.duracion
+        };
+        this.showModalEditar = true;
+    }
+}"
+@abrir-crear-grado.window="showModalCrear = true"
+class="flex flex-col gap-6">
+
+    {# ── Barra de estado ──────────────────────────────────────────────── #}
+    <div class="flex items-center gap-3 text-sm text-gray-500">
+        <span class="font-bold text-gray-900 text-base">{{ grados|length }}</span>
+        grado{{ grados|length|pluralize:"s" }} registrado{{ grados|length|pluralize:"s" }}
+    </div>
+
+    {# ── Grid de tarjetas ─────────────────────────────────────────────── #}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {% for grado in grados %}
+        <div class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:border-primary/30 hover:shadow-md transition-all duration-200">
+
+            <div class="flex items-start justify-between mb-5">
+                <div class="p-3 bg-primary/8 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                </div>
+                <div class="flex gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+                    <button
+                        data-id="{{ grado.id }}"
+                        data-nombre="{{ grado.nombre }}"
+                        data-duracion="{{ grado.duracion }}"
+                        @click="abrirEditar($el)"
+                        class="p-2 text-gray-500 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                        title="Editar">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </button>
+                    <form method="post" action="{% url 'decano-grados' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="eliminar">
+                        <input type="hidden" name="grado_id" value="{{ grado.id }}">
+                        <button type="submit"
+                                class="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Eliminar"
+                                onclick="return confirm('¿Eliminar el grado «{{ grado.nombre }}»?')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <h3 class="text-base font-bold text-gray-900 mb-3 leading-tight">{{ grado.nombre }}</h3>
+
+            <div class="flex items-center gap-4 text-sm text-gray-500">
+                <div class="flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{{ grado.duracion }} años</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <span>{{ grado.asignaturas.count }} asignatura{{ grado.asignaturas.count|pluralize:"s" }}</span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full">
+            <div class="bg-white rounded-2xl border border-dashed border-gray-200 p-16 text-center">
+                <div class="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                </div>
+                <p class="text-sm text-gray-400 mb-3">No hay grados registrados.</p>
+                <button @click="showModalCrear = true" class="text-sm text-primary font-semibold hover:underline">
+                    Crear el primer grado
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {# ── Modal Crear ──────────────────────────────────────────────────── #}
+    <div x-show="showModalCrear"
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center"
+         style="display: none;"
+         @keydown.escape.window="showModalCrear = false">
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="showModalCrear = false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10" @click.stop>
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-bold text-xl text-gray-900">Nuevo Grado</h3>
+                <button @click="showModalCrear = false" class="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form method="post" action="{% url 'decano-grados' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="crear">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nombre del Grado</label>
+                        <input type="text" name="nombre" required placeholder="Ej: Ingeniería Informática" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Duración (años)</label>
+                        <input type="number" name="duracion" required min="1" max="6" value="4" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+                    <button type="button" @click="showModalCrear = false" class="btn-ghost">Cancelar</button>
+                    <button type="submit" class="btn-primary">Crear grado</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# ── Modal Editar ─────────────────────────────────────────────────── #}
+    <div x-show="showModalEditar"
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center"
+         style="display: none;"
+         @keydown.escape.window="showModalEditar = false">
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="showModalEditar = false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10" @click.stop>
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-bold text-xl text-gray-900">Editar Grado</h3>
+                <button @click="showModalEditar = false" class="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form method="post" action="{% url 'decano-grados' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="editar">
+                <input type="hidden" name="grado_id" :value="editando.id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nombre del Grado</label>
+                        <input type="text" name="nombre" x-model="editando.nombre" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Duración (años)</label>
+                        <input type="number" name="duracion" x-model="editando.duracion" required min="1" max="6" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+                    <button type="button" @click="showModalEditar = false" class="btn-ghost">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

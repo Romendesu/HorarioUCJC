@@ -4,7 +4,7 @@ const dayList = document.getElementById("day-info");
 const weekList = document.getElementById("week-info");
 
 // Grupos de clases definidos en un array
-const activeClasses = ["bg-white", "text-rose-700", "shadow-sm"];
+const activeClasses = ["bg-white", "text-primary", "shadow-sm"];
 const inactiveClasses = ["bg-transparent", "text-gray-500"];
 
 // Funcion auxiliar para actualizar estilos

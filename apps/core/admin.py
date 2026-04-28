@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from django.contrib import admin
-from .models import Grado, Asignatura
+from .models import Grado, Asignatura, CursoAcademico, Horario
 
 # --- INLINE PARA ASIGNATURAS ---
 # Esto permite añadir asignaturas directamente desde la ficha del Grado
@@ -50,3 +50,29 @@ class AsignaturaAdmin(admin.ModelAdmin):
         return obj.descripcion[:50] + "..." if len(obj.descripcion) > 50 else obj.descripcion
     
     get_descripcion_corta.short_description = 'Descripción'
+
+
+# --- ADMIN DE CURSO ACADÉMICO ---
+@admin.register(CursoAcademico)
+class CursoAcademicoAdmin(admin.ModelAdmin):
+    list_display = ('año', 'estado')
+    list_filter = ('estado',)
+    search_fields = ('año',)
+
+
+# --- ADMIN DE HORARIO ---
+@admin.register(Horario)
+class HorarioAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'grado', 'curso', 'curso_academico', 'estado', 'fecha_creacion')
+    list_filter = ('estado', 'curso_academico', 'grado')
+    search_fields = ('grado__nombre',)
+    fieldsets = (
+        ('Información del Horario', {
+            'fields': ('curso_academico', 'grado', 'curso', 'estado')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_creacion', 'fecha_aprobacion'),
+            'classes': ('collapse',)
+        }),
+    )
+    readonly_fields = ('fecha_creacion',)

@@ -1,7 +1,8 @@
 # Entornos a ignorar a la hora de hacer commit
 .venv
 .env
-
+.claude
+.vscode
 # Cache
 __pycache__
 node_modules

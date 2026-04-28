@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+{% block header %}
+<div class="mb-8 flex flex-col gap-2">
+    <p class="font-headline text-xs lg:text-sm text-primary font-black tracking-[0.2em] uppercase mb-1 opacity-50">
+        Gestión Académica
+    </p>
+    <h2 class="font-headline text-3xl lg:text-4xl text-black font-black">Gestión de Horarios</h2>
+    <p class="font-headline text-xs lg:text-sm text-gray-400 font-black uppercase">Genera, verifica y aprueba los horarios académicos</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div x-data="{
+    modalOpen: false,
+    horarioActivo: null,
+    abrirModal(id) { this.horarioActivo = id; this.modalOpen = true; },
+    cerrarModal() { this.modalOpen = false; this.horarioActivo = null; }
+}" class="flex flex-col gap-12">
+
+    {# ── Formulario de Generación ─────────────────────────────────────── #}
+    <div x-data="{ open: false }" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <button @click="open = !open"
+                class="w-full flex items-center justify-between px-6 py-5 hover:bg-gray-50 transition-colors">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-primary/10 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <span class="font-bold text-gray-900">Generar nuevo horario automáticamente</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 transition-transform duration-200"
+                 :class="open ? 'rotate-180' : ''"
+                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </button>
+
+        <div x-show="open" x-transition class="px-6 pb-6 border-t border-gray-100">
+            <p class="text-sm text-gray-500 mt-4 mb-5">
+                El motor distribuirá las sesiones respetando la disponibilidad de los profesores,
+                evitando colisiones de aula y equilibrando la carga por día.
+            </p>
+            <form method="post" action="{% url 'decano-generar-horario' %}">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Año Académico</label>
+                        <select name="curso_academico" required
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                            <option value="">— Seleccionar —</option>
+                            {% for ca in cursos_academicos %}
+                            <option value="{{ ca.id }}">{{ ca.año }}{% if ca.estado == 'activo' %} (activo){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Grado</label>
+                        <select name="grado" required
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                            <option value="">— Seleccionar —</option>
+                            {% for grado in grados %}
+                            <option value="{{ grado.id }}">{{ grado.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Curso</label>
+                        <select name="curso" required
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                            <option value="">— Seleccionar —</option>
+                            <option value="1">1º Curso</option>
+                            <option value="2">2º Curso</option>
+                            <option value="3">3º Curso</option>
+                            <option value="4">4º Curso</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary/90 active:scale-[0.98] transition-all duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Generar Horario
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {# ── Horarios Pendientes de Aprobación ────────────────────────────── #}
+    <div>
+        <div class="flex items-center gap-3 mb-6">
+            <div class="p-2 rounded-xl" style="background-color: rgba(138,21,56,0.12);">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900">Pendientes de Aprobación</h3>
+            <span class="px-3 py-1 text-sm font-medium rounded-full text-primary" style="background-color: rgba(138,21,56,0.12);">{{ horarios_pendientes|length }}</span>
+        </div>
+
+        {% if horarios_pendientes %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for horario in horarios_pendientes %}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:border-amber-300 transition-colors">
+                <div class="flex items-start justify-between mb-4">
+                    {% if horario.estado == 'borrador' %}
+                    <span class="badge-gray">{{ horario.get_estado_display }}</span>
+                    {% else %}
+                    <span class="badge-blue">{{ horario.get_estado_display }}</span>
+                    {% endif %}
+                    <span class="text-xs text-gray-400">{{ horario.fecha_creacion|date:"d/m/Y" }}</span>
+                </div>
+
+                <h4 class="text-lg font-bold text-gray-900 mb-1">{{ horario.grado.nombre }}</h4>
+                <p class="text-sm text-gray-500 mb-1">Curso {{ horario.curso }} &middot; {{ horario.curso_academico.año }}</p>
+                <p class="text-xs text-gray-400 mb-4">
+                    {{ horario.sesiones.count }} sesión{{ horario.sesiones.count|pluralize:"es" }} generada{{ horario.sesiones.count|pluralize:"s" }}
+                </p>
+
+                <div class="grid grid-cols-4 gap-2 pt-4 border-t border-gray-100">
+                    {# Ver #}
+                    <button @click="abrirModal('{{ horario.id }}')"
+                            class="btn-secondary justify-center col-span-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Ver
+                    </button>
+                    {# Validar #}
+                    <a href="{% url 'decano-validar-horario' horario.id %}"
+                       class="btn-secondary justify-center col-span-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
+                        Validar
+                    </a>
+                    {# Aprobar #}
+                    <form method="post" class="col-span-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="aprobar">
+                        <input type="hidden" name="horario_id" value="{{ horario.id }}">
+                        <button type="submit" class="btn-primary w-full justify-center bg-green-600 hover:bg-green-700 focus-visible:ring-green-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Aprobar
+                        </button>
+                    </form>
+                    {# Rechazar #}
+                    <form method="post" class="col-span-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="rechazar">
+                        <input type="hidden" name="horario_id" value="{{ horario.id }}">
+                        <button type="submit" class="btn-danger w-full justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Rechazar
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-gray-50 rounded-2xl p-8 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-gray-500">No hay horarios pendientes de aprobación</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── Horarios Aprobados ───────────────────────────────────────────── #}
+    <div>
+        <div class="flex items-center gap-3 mb-6">
+            <div class="p-2 rounded-xl" style="background-color: rgba(138,21,56,0.12);">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900">Horarios Aprobados</h3>
+            <span class="px-3 py-1 text-sm font-medium rounded-full text-primary" style="background-color: rgba(138,21,56,0.12);">{{ horarios_generados|length }}</span>
+        </div>
+
+        {% if horarios_generados %}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Grado</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Curso</th>
+                            <th class="hidden sm:table-cell px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Año</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Estado</th>
+                            <th class="hidden md:table-cell px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Creación</th>
+                            <th class="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Aprobación</th>
+                            <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Sesiones</th>
+                            <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Ver</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for horario in horarios_generados %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <span class="font-semibold text-gray-900">{{ horario.grado.nombre }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-gray-700">Curso {{ horario.curso }}</span>
+                            </td>
+                            <td class="hidden sm:table-cell px-6 py-4">
+                                <span class="text-gray-700">{{ horario.curso_academico.año }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="badge-green">
+                                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                    {{ horario.get_estado_display }}
+                                </span>
+                            </td>
+                            <td class="hidden md:table-cell px-6 py-4">
+                                <span class="text-gray-500 text-sm">{{ horario.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                            </td>
+                            <td class="hidden lg:table-cell px-6 py-4">
+                                <span class="text-gray-500 text-sm">{{ horario.fecha_aprobacion|date:"d/m/Y H:i"|default:"—" }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="text-sm font-medium text-gray-700">{{ horario.sesiones.count }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button @click="abrirModal('{{ horario.id }}')"
+                                        class="p-2 text-gray-400 hover:text-primary transition-colors rounded-lg hover:bg-primary/5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-gray-50 rounded-2xl p-8 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p class="text-gray-500">No hay horarios aprobados todavía</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── Modal de visualización del horario ──────────────────────────── #}
+    <div x-show="modalOpen"
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 pt-8"
+         @keydown.escape.window="cerrarModal()"
+         style="display:none;">
+
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="cerrarModal()"></div>
+
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl mx-auto p-6 z-10 mb-8" @click.stop>
+
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-bold text-xl text-gray-900">Vista del Horario</h3>
+                <button @click="cerrarModal()"
+                        class="p-2 text-gray-400 hover:text-gray-700 rounded-xl hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            {% for horario in todos_horarios %}
+            <div x-show="horarioActivo === '{{ horario.id }}'">
+                <div class="flex flex-wrap items-center gap-3 mb-5">
+                    {% if horario.estado == 'aprobado' %}
+                    <span class="badge-green">{{ horario.get_estado_display }}</span>
+                    {% elif horario.estado == 'borrador' %}
+                    <span class="badge-gray">{{ horario.get_estado_display }}</span>
+                    {% else %}
+                    <span class="badge-blue">{{ horario.get_estado_display }}</span>
+                    {% endif %}
+                    <p class="text-sm font-semibold text-gray-700">
+                        {{ horario.grado.nombre }} &mdash; Curso {{ horario.curso }} &mdash; {{ horario.curso_academico.año }}
+                    </p>
+                    <span class="text-xs text-gray-400">{{ horario.sesiones.count }} sesiones</span>
+                </div>
+
+                {% if horario.grid %}
+                <div class="overflow-x-auto rounded-xl border border-gray-100">
+                    <table class="w-full border-collapse text-sm">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase bg-gray-50 border-b border-r border-gray-100 text-left whitespace-nowrap">Franja horaria</th>
+                                <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase bg-gray-50 border-b border-r border-gray-100 text-center">Lunes</th>
+                                <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase bg-gray-50 border-b border-r border-gray-100 text-center">Martes</th>
+                                <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase bg-gray-50 border-b border-r border-gray-100 text-center">Miércoles</th>
+                                <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase bg-gray-50 border-b border-r border-gray-100 text-center">Jueves</th>
+                                <th class="py-3 px-4 text-xs font-bold text-gray-500 uppercase bg-gray-50 border-b border-gray-100 text-center">Viernes</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for fila in horario.grid %}
+                            <tr class="hover:bg-gray-50/50">
+                                <td class="py-2 px-4 text-xs font-semibold text-gray-500 bg-gray-50 border-r border-gray-100 whitespace-nowrap">
+                                    {{ fila.hora_inicio }}&ndash;{{ fila.hora_fin }}
+                                </td>
+                                {% for sesion in fila.celdas %}
+                                <td class="py-1.5 px-2 border-r border-gray-100 last:border-r-0 min-w-35 align-top">
+                                    {% if sesion %}
+                                    <div class="bg-primary/8 border border-primary/15 rounded-lg p-2 h-full">
+                                        <p class="text-xs font-bold text-primary leading-tight">{{ sesion.asignatura.nombre }}</p>
+                                        {% if sesion.profesor %}
+                                        <p class="text-xs text-gray-500 mt-1 truncate">{{ sesion.profesor.user.get_full_name|default:sesion.profesor.user.username }}</p>
+                                        {% endif %}
+                                        {% if sesion.aula %}
+                                        <p class="text-xs text-gray-400 mt-0.5">{{ sesion.aula }}</p>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-12 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <p class="text-sm">Este horario no tiene sesiones generadas.</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}
