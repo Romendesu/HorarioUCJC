@@ -21,17 +21,20 @@
 <div x-data="{
     showModalCrear: false,
     showModalEditar: false,
-    editando: { id: '', nombre: '', descripcion: '', creditos: 1, tipo: 's', grado_id: '' },
+    editando: { id: '', nombre: '', descripcion: '', creditos: 1, semestre: '1', grado_ids: [] },
     abrirEditar(btn) {
         this.editando = {
             id: btn.dataset.id,
             nombre: btn.dataset.nombre,
             descripcion: btn.dataset.descripcion,
             creditos: btn.dataset.creditos,
-            tipo: btn.dataset.tipo,
-            grado_id: btn.dataset.gradoId
+            semestre: btn.dataset.semestre,
+            grado_ids: btn.dataset.gradoIds ? btn.dataset.gradoIds.split(',') : []
         };
         this.showModalEditar = true;
+    },
+    tieneGrado(id) {
+        return this.editando.grado_ids.includes(id);
     }
 }"
 @abrir-crear-asignatura.window="showModalCrear = true"
@@ -54,9 +57,9 @@ class="flex flex-col gap-6">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nombre</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Grado</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Grados</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Créditos</th>
-                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tipo</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Semestre</th>
                         <th class="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Descripción</th>
                         <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
                     </tr>
@@ -68,9 +71,13 @@ class="flex flex-col gap-6">
                             <span class="font-semibold text-gray-900">{{ asignatura.nombre }}</span>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="badge-blue">
-                                {{ asignatura.grado.nombre }}
-                            </span>
+                            <div class="flex flex-wrap gap-1">
+                                {% for grado in asignatura.grados.all %}
+                                <span class="badge-blue text-xs">{{ grado.nombre|truncatechars:20 }}</span>
+                                {% empty %}
+                                <span class="text-gray-300 text-sm italic">Sin grado</span>
+                                {% endfor %}
+                            </div>
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-1.5">
@@ -79,8 +86,10 @@ class="flex flex-col gap-6">
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            {% if asignatura.tipo == 's' %}
-                            <span class="badge-blue">Semestral</span>
+                            {% if asignatura.semestre == '1' %}
+                            <span class="badge-blue">1er Sem.</span>
+                            {% elif asignatura.semestre == '2' %}
+                            <span class="badge-primary">2º Sem.</span>
                             {% else %}
                             <span class="badge-green">Anual</span>
                             {% endif %}
@@ -95,8 +104,8 @@ class="flex flex-col gap-6">
                                     data-nombre="{{ asignatura.nombre }}"
                                     data-descripcion="{{ asignatura.descripcion|default:'' }}"
                                     data-creditos="{{ asignatura.creditos }}"
-                                    data-tipo="{{ asignatura.tipo }}"
-                                    data-grado-id="{{ asignatura.grado.id }}"
+                                    data-semestre="{{ asignatura.semestre }}"
+                                    data-grado-ids="{{ asignatura.grados.all|join:',' }}"
                                     @click="abrirEditar($el)"
                                     class="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                                     title="Editar">
@@ -155,7 +164,7 @@ class="flex flex-col gap-6">
          style="display: none;"
          @keydown.escape.window="showModalCrear = false">
         <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="showModalCrear = false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10" @click.stop>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6 z-10 max-h-[90vh] overflow-y-auto" @click.stop>
             <div class="flex items-center justify-between mb-6">
                 <h3 class="font-bold text-xl text-gray-900">Nueva Asignatura</h3>
                 <button @click="showModalCrear = false" class="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-colors">
@@ -168,33 +177,42 @@ class="flex flex-col gap-6">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nombre</label>
-                        <input type="text" name="nombre" required placeholder="Ej: Álgebra Lineal" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                        <input type="text" name="nombre" required placeholder="Ej: Álgebra Lineal"
+                               class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1.5">Descripción</label>
-                        <textarea name="descripcion" rows="2" placeholder="Descripción opcional..." class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors resize-none"></textarea>
+                        <textarea name="descripcion" rows="2" placeholder="Descripción opcional..."
+                                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors resize-none"></textarea>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1.5">Créditos ECTS</label>
-                            <input type="number" name="creditos" required min="1" max="20" placeholder="6" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                            <input type="number" name="creditos" required min="1" max="20" placeholder="6"
+                                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Tipo</label>
-                            <select name="tipo" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
-                                <option value="s">Semestral</option>
-                                <option value="a">Anual</option>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Semestre</label>
+                            <select name="semestre" required
+                                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                                {% for valor, etiqueta in semestre_choices %}
+                                <option value="{{ valor }}">{{ etiqueta }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Grado</label>
-                        <select name="grado" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
-                            <option value="">— Seleccionar grado —</option>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Grados <span class="text-gray-400 font-normal">(puede ser varios)</span></label>
+                        <div class="border border-gray-200 rounded-xl divide-y divide-gray-100 max-h-44 overflow-y-auto">
                             {% for grado in grados %}
-                            <option value="{{ grado.id }}">{{ grado.nombre }}</option>
+                            <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="grados" value="{{ grado.id }}"
+                                       class="w-4 h-4 accent-primary rounded">
+                                <span class="text-sm text-gray-700">{{ grado.nombre }}</span>
+                            </label>
                             {% endfor %}
-                        </select>
+                        </div>
+                        <p class="mt-1.5 text-xs text-gray-400">Selecciona los grados en que se imparte esta asignatura.</p>
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
@@ -218,7 +236,7 @@ class="flex flex-col gap-6">
          style="display: none;"
          @keydown.escape.window="showModalEditar = false">
         <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="showModalEditar = false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10" @click.stop>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6 z-10 max-h-[90vh] overflow-y-auto" @click.stop>
             <div class="flex items-center justify-between mb-6">
                 <h3 class="font-bold text-xl text-gray-900">Editar Asignatura</h3>
                 <button @click="showModalEditar = false" class="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-colors">
@@ -232,32 +250,42 @@ class="flex flex-col gap-6">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nombre</label>
-                        <input type="text" name="nombre" x-model="editando.nombre" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                        <input type="text" name="nombre" x-model="editando.nombre" required
+                               class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1.5">Descripción</label>
-                        <textarea name="descripcion" x-model="editando.descripcion" rows="2" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors resize-none"></textarea>
+                        <textarea name="descripcion" x-model="editando.descripcion" rows="2"
+                                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors resize-none"></textarea>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1.5">Créditos ECTS</label>
-                            <input type="number" name="creditos" x-model="editando.creditos" required min="1" max="20" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                            <input type="number" name="creditos" x-model="editando.creditos" required min="1" max="20"
+                                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Tipo</label>
-                            <select name="tipo" x-model="editando.tipo" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
-                                <option value="s">Semestral</option>
-                                <option value="a">Anual</option>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Semestre</label>
+                            <select name="semestre" x-model="editando.semestre" required
+                                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                                {% for valor, etiqueta in semestre_choices %}
+                                <option value="{{ valor }}">{{ etiqueta }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Grado</label>
-                        <select name="grado" x-model="editando.grado_id" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Grados</label>
+                        <div class="border border-gray-200 rounded-xl divide-y divide-gray-100 max-h-44 overflow-y-auto">
                             {% for grado in grados %}
-                            <option value="{{ grado.id }}">{{ grado.nombre }}</option>
+                            <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="grados" value="{{ grado.id }}"
+                                       :checked="tieneGrado('{{ grado.id }}')"
+                                       class="w-4 h-4 accent-primary rounded">
+                                <span class="text-sm text-gray-700">{{ grado.nombre }}</span>
+                            </label>
                             {% endfor %}
-                        </select>
+                        </div>
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">

@@ -46,9 +46,10 @@ class Asignatura(models.Model):
 
     ---------------------------------------------------------------
     '''
-    DURATION_GRADE = (
-        ('s', 'Semestral'),
-        ('a', 'Anual')
+    SEMESTRE_CHOICES = (
+        ('1', 'Primer semestre'),
+        ('2', 'Segundo semestre'),
+        ('a', 'Anual'),
     )
 
     id = models.UUIDField(
@@ -57,7 +58,7 @@ class Asignatura(models.Model):
         primary_key = True,
         editable= False
     )
-    
+
     nombre = models.CharField(
         help_text="Nombre de la asignatura",
         max_length=100
@@ -68,15 +69,17 @@ class Asignatura(models.Model):
         max_length=1000
     )
 
-    grado = models.ForeignKey(Grado, on_delete=models.CASCADE, related_name='asignaturas', null=True)
+    grados = models.ManyToManyField(Grado, related_name='asignaturas', blank=True)
 
     creditos = models.IntegerField(
         help_text="Creditos de la asignatura",
     )
 
-    tipo = models.CharField(
-        choices=DURATION_GRADE,
-        max_length=1
+    semestre = models.CharField(
+        choices=SEMESTRE_CHOICES,
+        max_length=1,
+        default='1',
+        help_text="Semestre en que se imparte",
     )
 
 
@@ -148,6 +151,11 @@ class Horario(models.Model):
         ('rechazado', 'Rechazado'),
     ]
 
+    SEMESTRE_CHOICES = [
+        ('1', '1er Semestre'),
+        ('2', '2º Semestre'),
+    ]
+
     id = models.UUIDField(
         default=uuid.uuid4,
         unique=True,
@@ -169,6 +177,13 @@ class Horario(models.Model):
 
     curso = models.IntegerField(
         help_text="Curso del grado (1, 2, 3, 4)"
+    )
+
+    semestre = models.CharField(
+        max_length=1,
+        choices=SEMESTRE_CHOICES,
+        default='1',
+        help_text="Semestre para el que se genera el horario",
     )
 
     estado = models.CharField(

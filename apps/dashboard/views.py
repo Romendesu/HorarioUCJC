@@ -28,20 +28,30 @@ _FRANJAS_STR = [
 
 
 def _build_grid(sesiones):
-    """Construye la cuadrícula del horario como lista de filas [{hora_inicio, hora_fin, celdas: [sesion|None]}]."""
+    """
+    Construye la cuadrícula del horario derivando las franjas directamente
+    de las sesiones existentes, sin depender de horas hardcodeadas.
+    """
+    if not sesiones:
+        return []
+
+    # Recopilar franjas únicas ordenadas cronológicamente
+    franjas = sorted(
+        {(s.hora_inicio, s.hora_fin) for s in sesiones},
+        key=lambda f: f[0],
+    )
+
     grid = []
-    for hi_str, hf_str in _FRANJAS_STR:
-        h, m = int(hi_str[:2]), int(hi_str[3:])
-        hi = dt_time(h, m)
-        fila = {'hora_inicio': hi_str, 'hora_fin': hf_str, 'celdas': []}
-        has_any = False
+    for hi, hf in franjas:
+        fila = {
+            'hora_inicio': hi.strftime('%H:%M'),
+            'hora_fin': hf.strftime('%H:%M'),
+            'celdas': [],
+        }
         for dia in _DIAS_ORDER:
             s = next((s for s in sesiones if s.dia == dia and s.hora_inicio == hi), None)
-            if s:
-                has_any = True
             fila['celdas'].append(s)
-        if has_any:
-            grid.append(fila)
+        grid.append(fila)
     return grid
 
 
@@ -68,7 +78,10 @@ def _obtener_sesiones(rol, profile):
         except Grado.DoesNotExist:
             return None, SesionHorario.objects.none()
         horario = Horario.objects.filter(
-            curso_academico=curso_activo, grado=grado, estado='aprobado'
+            curso_academico=curso_activo,
+            grado=grado,
+            curso=profile.anio,
+            estado='aprobado',
         ).first()
         if not horario:
             return None, SesionHorario.objects.none()
@@ -187,22 +200,7 @@ def schedule_redirect(request):
 
     total_horas_hoy = round(len(sesiones_hoy) * 1.5)
 
-    # Construir grid semanal (solo franjas con al menos una sesión)
-    grid = []
-    for hi, hf in _FRANJAS:
-        fila = {
-            'hora_inicio': hi.strftime('%H:%M'),
-            'hora_fin': hf.strftime('%H:%M'),
-            'celdas': [],
-        }
-        has_any = False
-        for dia in _DIAS_ORDER:
-            sesion = next((s for s in sesiones_list if s.dia == dia and s.hora_inicio == hi), None)
-            if sesion:
-                has_any = True
-            fila['celdas'].append(sesion)
-        if has_any:
-            grid.append(fila)
+    grid = _build_grid(sesiones_list)
 
     context = {
         'Rol': rol,
@@ -285,55 +283,55 @@ def decano_gestionar_asignaturas(request):
         
         if action == 'crear':
             nombre = request.POST.get('nombre')
-            descripcion = request.POST.get('descripcion')
+            descripcion = request.POST.get('descripcion', '')
             creditos = request.POST.get('creditos')
-            tipo = request.POST.get('tipo')
-            grado_id = request.POST.get('grado')
-            
-            if nombre and creditos and tipo and grado_id:
-                grado = Grado.objects.get(id=grado_id)
-                Asignatura.objects.create(
+            semestre = request.POST.get('semestre', '1')
+            grado_ids = request.POST.getlist('grados')
+
+            if nombre and creditos and grado_ids:
+                asignatura = Asignatura.objects.create(
                     nombre=nombre,
                     descripcion=descripcion,
                     creditos=int(creditos),
-                    tipo=tipo,
-                    grado=grado
+                    semestre=semestre,
                 )
+                asignatura.grados.set(Grado.objects.filter(id__in=grado_ids))
                 messages.success(request, 'Asignatura creada correctamente')
-        
+
         elif action == 'editar':
             asignatura_id = request.POST.get('asignatura_id')
             nombre = request.POST.get('nombre')
-            descripcion = request.POST.get('descripcion')
+            descripcion = request.POST.get('descripcion', '')
             creditos = request.POST.get('creditos')
-            tipo = request.POST.get('tipo')
-            grado_id = request.POST.get('grado')
-            
+            semestre = request.POST.get('semestre', '1')
+            grado_ids = request.POST.getlist('grados')
+
             asignatura = Asignatura.objects.get(id=asignatura_id)
             asignatura.nombre = nombre
             asignatura.descripcion = descripcion
             asignatura.creditos = int(creditos)
-            asignatura.tipo = tipo
-            asignatura.grado = Grado.objects.get(id=grado_id)
+            asignatura.semestre = semestre
             asignatura.save()
+            asignatura.grados.set(Grado.objects.filter(id__in=grado_ids))
             messages.success(request, 'Asignatura actualizada correctamente')
-        
+
         elif action == 'eliminar':
             asignatura_id = request.POST.get('asignatura_id')
             Asignatura.objects.get(id=asignatura_id).delete()
             messages.success(request, 'Asignatura eliminada correctamente')
-        
+
         return redirect('decano-asignaturas')
-    
+
     grados = Grado.objects.all()
-    asignaturas = Asignatura.objects.select_related('grado').all()
-    
+    asignaturas = Asignatura.objects.prefetch_related('grados').all()
+
     context = {
         'Rol': rol,
         'Perfil': profile,
         'Title': 'Gestionar Asignaturas',
         'grados': grados,
         'asignaturas': asignaturas,
+        'semestre_choices': Asignatura.SEMESTRE_CHOICES,
     }
     
     return render(request, 'dashboard/decano/asignaturas.html', context)
@@ -523,19 +521,28 @@ def decano_generar_horario(request):
         curso_academico_id = request.POST.get('curso_academico')
         grado_id = request.POST.get('grado')
         curso = request.POST.get('curso')
-        
+        semestre = request.POST.get('semestre', '1')
+        hora_inicio = request.POST.get('hora_inicio', '09:00')
+        duracion_min = int(request.POST.get('duracion_min', 90))
+        num_franjas = int(request.POST.get('num_franjas', 6))
+
         if curso_academico_id and grado_id and curso:
-            resultado = generar_horario(curso_academico_id, grado_id, int(curso))
-            
+            resultado = generar_horario(
+                curso_academico_id, grado_id, int(curso),
+                semestre=semestre,
+                hora_inicio=hora_inicio,
+                duracion_min=duracion_min,
+                num_franjas=num_franjas,
+            )
+
             if resultado['success']:
                 messages.success(request, resultado['mensaje'])
-                if resultado.get('advertencias'):
-                    for adv in resultado['advertencias']:
-                        messages.warning(request, adv)
+                for adv in resultado.get('advertencias', []):
+                    messages.warning(request, adv)
             else:
                 for error in resultado.get('errores', []):
                     messages.error(request, error)
-        
+
         return redirect('decano-horarios')
     
     # Si no es POST, redirigir
@@ -544,21 +551,215 @@ def decano_generar_horario(request):
 
 @login_required
 def decano_validar_horario(request, horario_id):
-    """Vista para validar un horario"""
-    rol, profile = obtain_rol(request.user)
-    
+    """Ejecuta la validación técnica y redirige de vuelta a la edición."""
+    rol, _ = obtain_rol(request.user)
     if rol != 'Decano':
         return redirect('dashboard-inicio')
-    
-    resultado = validar_horario(horario_id)
-    
+
+    resultado = validar_horario(str(horario_id))
+
     if resultado['valido']:
-        messages.success(request, 'El horario es válido')
+        messages.success(
+            request,
+            f"Horario válido — {resultado['total_sesiones']} sesiones, "
+            f"{resultado['horas_totales']} h lectivas."
+        )
     else:
         for error in resultado['errores']:
             messages.error(request, error)
-    
-    return redirect('decano-horarios')
+
+    return redirect('decano-editar-horario', horario_id=horario_id)
+
+
+@login_required
+def decano_editar_horario(request, horario_id):
+    """Página completa para gestionar las sesiones de un horario pendiente."""
+    rol, profile = obtain_rol(request.user)
+    if rol != 'Decano':
+        return redirect('dashboard-inicio')
+
+    horario = Horario.objects.select_related(
+        'grado', 'curso_academico'
+    ).prefetch_related(
+        'sesiones__asignatura', 'sesiones__profesor__user'
+    ).get(id=horario_id)
+
+    if horario.estado not in ('borrador', 'revision'):
+        messages.warning(request, 'Solo se pueden editar horarios en estado borrador o revisión.')
+        return redirect('decano-horarios')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'eliminar_sesion':
+            sesion_id = request.POST.get('sesion_id')
+            SesionHorario.objects.filter(id=sesion_id, horario=horario).delete()
+            messages.success(request, 'Sesión eliminada.')
+
+        elif action == 'mover_sesion':
+            sesion_id        = request.POST.get('sesion_id')
+            nuevo_dia        = request.POST.get('nuevo_dia')
+            nueva_hora_inicio = request.POST.get('nueva_hora_inicio')
+            nueva_hora_fin   = request.POST.get('nueva_hora_fin')
+            try:
+                sesion = SesionHorario.objects.select_related('asignatura', 'profesor__user').get(
+                    id=sesion_id, horario=horario
+                )
+                hi = dt_time(*map(int, nueva_hora_inicio.split(':')))
+                hf = dt_time(*map(int, nueva_hora_fin.split(':')))
+                dia_display = dict(SesionHorario.DIA_CHOICES).get(nuevo_dia, nuevo_dia)
+                if SesionHorario.objects.filter(
+                    horario=horario, dia=nuevo_dia, hora_inicio=hi
+                ).exclude(id=sesion_id).exists():
+                    messages.error(request, 'El grupo ya tiene una sesión en esa franja horaria.')
+                elif sesion.profesor and SesionHorario.objects.filter(
+                    horario__curso_academico=horario.curso_academico,
+                    dia=nuevo_dia, hora_inicio=hi, profesor=sesion.profesor
+                ).exclude(id=sesion_id).exists():
+                    nombre_prof = sesion.profesor.user.get_full_name() or sesion.profesor.user.username
+                    messages.error(request, f'{nombre_prof} ya tiene otra sesión en esa franja horaria.')
+                else:
+                    sesion.dia        = nuevo_dia
+                    sesion.hora_inicio = hi
+                    sesion.hora_fin   = hf
+                    sesion.save()
+                    messages.success(request, f'"{sesion.asignatura.nombre}" movida al {dia_display} {nueva_hora_inicio}–{nueva_hora_fin}.')
+            except Exception as e:
+                messages.error(request, f'Error al mover la sesión: {e}')
+
+        elif action == 'añadir_sesion':
+            asignatura_id = request.POST.get('asignatura')
+            profesor_id   = request.POST.get('profesor')
+            dia           = request.POST.get('dia')
+            hora_inicio   = request.POST.get('hora_inicio')
+            hora_fin      = request.POST.get('hora_fin')
+            aula          = request.POST.get('aula', '').strip() or 'Por asignar'
+
+            try:
+                asignatura = Asignatura.objects.get(id=asignatura_id)
+                hi = dt_time(*map(int, hora_inicio.split(':')))
+                hf = dt_time(*map(int, hora_fin.split(':')))
+
+                # Hard constraint: grupo ya tiene sesión en ese slot
+                if SesionHorario.objects.filter(horario=horario, dia=dia, hora_inicio=hi).exists():
+                    messages.error(request, 'El grupo ya tiene una sesión en esa franja horaria.')
+                else:
+                    profesor = Profesor.objects.get(id=profesor_id) if profesor_id else None
+
+                    # Hard constraint: profesor ocupado en ese slot (cross-horarios del mismo año)
+                    if profesor and SesionHorario.objects.filter(
+                        horario__curso_academico=horario.curso_academico,
+                        dia=dia, hora_inicio=hi, profesor=profesor
+                    ).exists():
+                        messages.error(request, f'El profesor ya tiene otra sesión en esa franja.')
+                    else:
+                        SesionHorario.objects.create(
+                            horario=horario,
+                            asignatura=asignatura,
+                            profesor=profesor,
+                            dia=dia,
+                            hora_inicio=hi,
+                            hora_fin=hf,
+                            aula=aula,
+                        )
+                        messages.success(request, 'Sesión añadida correctamente.')
+            except Exception as e:
+                messages.error(request, f'Error al añadir la sesión: {e}')
+
+        elif action == 'aprobar':
+            horario.estado = 'aprobado'
+            horario.fecha_aprobacion = datetime.now()
+            horario.save()
+            messages.success(request, 'Horario aprobado.')
+            return redirect('decano-horarios')
+
+        elif action == 'rechazar':
+            horario.estado = 'rechazado'
+            horario.save()
+            messages.success(request, 'Horario rechazado.')
+            return redirect('decano-horarios')
+
+        return redirect('decano-editar-horario', horario_id=horario_id)
+
+    # Asignaturas disponibles: mismo grado + semestre del horario (+ anuales)
+    asignaturas_disponibles = Asignatura.objects.filter(
+        grados=horario.grado,
+        semestre__in=[horario.semestre, 'a'],
+    ).order_by('nombre')
+
+    # Profesores por asignatura (para el selector dinámico en JS)
+    profesores_por_asig = {}
+    for asig in asignaturas_disponibles:
+        profs = list(
+            asig.profesores.select_related('user').values(
+                'id', 'user__first_name', 'user__last_name', 'user__username'
+            )
+        )
+        profesores_por_asig[str(asig.id)] = [
+            {
+                'id': str(p['id']),
+                'nombre': f"{p['user__first_name']} {p['user__last_name']}".strip()
+                          or p['user__username'],
+            }
+            for p in profs
+        ]
+
+    import json
+    sesiones = list(horario.sesiones.select_related('asignatura', 'profesor__user').all())
+    grid = _build_grid(sesiones)
+
+    DIAS_CHOICES = [('l','Lunes'),('m','Martes'),('x','Miércoles'),('j','Jueves'),('v','Viernes')]
+
+    sesiones_data = [
+        {
+            'id': str(s.id),
+            'asignatura_nombre': s.asignatura.nombre,
+            'asignatura_id': str(s.asignatura.id),
+            'profesor_id': str(s.profesor.id) if s.profesor else None,
+            'profesor_nombre': (
+                s.profesor.user.get_full_name() or s.profesor.user.username
+            ) if s.profesor else None,
+            'dia': s.dia,
+            'hora_inicio': s.hora_inicio.strftime('%H:%M'),
+            'hora_fin': s.hora_fin.strftime('%H:%M'),
+            'aula': s.aula,
+        }
+        for s in sesiones
+    ]
+
+    otras_sesiones = SesionHorario.objects.filter(
+        horario__curso_academico=horario.curso_academico,
+    ).exclude(horario=horario).select_related('profesor__user')
+    otras_sesiones_data = [
+        {
+            'id': str(s.id),
+            'dia': s.dia,
+            'hora_inicio': s.hora_inicio.strftime('%H:%M'),
+            'hora_fin': s.hora_fin.strftime('%H:%M'),
+            'profesor_id': str(s.profesor.id) if s.profesor else None,
+        }
+        for s in otras_sesiones
+    ]
+
+    context = {
+        'Rol': rol,
+        'Perfil': profile,
+        'Title': f'Editar Horario — {horario.grado.nombre}',
+        'horario': horario,
+        'grid': grid,
+        'sesiones': sesiones,
+        'asignaturas_disponibles': asignaturas_disponibles,
+        'profesores_por_asig_json': json.dumps(profesores_por_asig),
+        'sesiones_json': json.dumps(sesiones_data),
+        'otras_sesiones_json': json.dumps(otras_sesiones_data),
+        'dias_choices': DIAS_CHOICES,
+        'aulas': [
+            'Aula A-1','Aula A-2','Aula A-3','Aula A-4',
+            'Aula B-1','Aula B-2','Aula B-3',
+            'Laboratorio 1','Laboratorio 2','Sala de Conferencias',
+        ],
+    }
+    return render(request, 'dashboard/decano/editar_horario.html', context)
 
 
 @login_required
@@ -581,6 +782,16 @@ def decano_usuarios(request):
             estudiante.anio = int(anio) if anio else 1
             estudiante.save()
             messages.success(request, 'Estudiante actualizado correctamente')
+
+        elif action == 'editar_profesor':
+            profesor_id = request.POST.get('profesor_id')
+            dias = request.POST.getlist('disponibilidad')
+            asignatura_ids = request.POST.getlist('asignaturas_profesor')
+            profesor = Profesor.objects.get(id=profesor_id)
+            profesor.disponibilidad = dias
+            profesor.save()
+            profesor.asignaturas.set(Asignatura.objects.filter(id__in=asignatura_ids))
+            messages.success(request, 'Profesor actualizado correctamente.')
 
         elif action == 'crear_usuario':
             email = request.POST.get('email', '').strip()
@@ -609,7 +820,10 @@ def decano_usuarios(request):
                     last_name=apellidos,
                 )
                 if rol_nuevo == 'profesor':
-                    Profesor.objects.create(user=user, disponibilidad=['l', 'm', 'x', 'j', 'v'], asignaturas='')
+                    dias = request.POST.getlist('disponibilidad')
+                    if not dias:
+                        dias = ['l', 'm', 'x', 'j', 'v']
+                    Profesor.objects.create(user=user, disponibilidad=dias)
                     messages.success(request, f'Profesor {email} creado correctamente.')
                 else:
                     Estudiante.objects.create(user=user, anio=1, carrera='')
@@ -618,8 +832,9 @@ def decano_usuarios(request):
         return redirect('decano-usuarios')
 
     estudiantes = Estudiante.objects.select_related('user').all().order_by('user__last_name', 'user__first_name')
-    profesores = Profesor.objects.select_related('user').all().order_by('user__last_name', 'user__first_name')
+    profesores = Profesor.objects.select_related('user').prefetch_related('asignaturas').all().order_by('user__last_name', 'user__first_name')
     grados = Grado.objects.all().order_by('nombre')
+    todas_asignaturas = Asignatura.objects.prefetch_related('grados').order_by('nombre')
 
     context = {
         'Rol': rol,
@@ -628,6 +843,8 @@ def decano_usuarios(request):
         'estudiantes': estudiantes,
         'profesores': profesores,
         'grados': grados,
+        'dias_disponibilidad': Profesor.AVAIABLE_DAYS,
+        'todas_asignaturas': todas_asignaturas,
     }
 
     return render(request, 'dashboard/decano/usuarios.html', context)

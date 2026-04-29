@@ -13,6 +13,7 @@ urlpatterns = [
     path('decano/horarios/', views.decano_horarios, name='decano-horarios'),
     path('decano/horarios/generar/', views.decano_generar_horario, name='decano-generar-horario'),
     path('decano/horarios/validar/<uuid:horario_id>/', views.decano_validar_horario, name='decano-validar-horario'),
+    path('decano/horarios/<uuid:horario_id>/editar/', views.decano_editar_horario, name='decano-editar-horario'),
     path('decano/usuarios/', views.decano_usuarios, name='decano-usuarios'),
     
     # URLs del Estudiante

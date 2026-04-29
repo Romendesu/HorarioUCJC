@@ -33,7 +33,12 @@ class Profesor(models.Model):
         help_text="Seleccione los dias de disponibilidad del profesor"
     )
 
-    asignaturas = models.CharField(max_length=100)
+    asignaturas = models.ManyToManyField(
+        'core.Asignatura',
+        blank=True,
+        related_name='profesores',
+        help_text="Asignaturas que puede impartir este profesor",
+    )
 
 # Modelo del decano
 class Decano(models.Model):

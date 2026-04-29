@@ -80,8 +80,13 @@ class EstudianteAdmin(admin.ModelAdmin):
 
 @admin.register(Profesor)
 class ProfesorAdmin(admin.ModelAdmin):
-    form = ProfesorForm # <--- Y TAMBIÉN AQUÍ para la edición individual
-    list_display = ('user', 'asignaturas', 'disponibilidad')
+    form = ProfesorForm
+    list_display = ('user', 'get_asignaturas', 'disponibilidad')
+    filter_horizontal = ('asignaturas',)
+
+    def get_asignaturas(self, obj):
+        return ", ".join(obj.asignaturas.values_list('nombre', flat=True)) or "—"
+    get_asignaturas.short_description = 'Asignaturas'
 
 @admin.register(Decano)
 class DecanoAdmin(admin.ModelAdmin):
